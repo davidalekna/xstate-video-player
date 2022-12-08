@@ -1,13 +1,13 @@
-import { useActor, useMachine } from "@xstate/react";
+import { useInterpret } from "@xstate/react";
 import { createContext, PropsWithChildren, useContext } from "react";
-import { ActorRefFrom } from "xstate";
+import { InterpreterFrom } from "xstate";
 import { playlistMachine } from "./playlistMachine";
 
 type PlaylistProviderState = {
-  service: ActorRefFrom<typeof playlistMachine>;
+  playlistService: InterpreterFrom<typeof playlistMachine>;
 };
 const PlaylistContext = createContext<PlaylistProviderState>({
-  service: {} as any,
+  playlistService: {} as any,
 });
 
 type PlaylistProviderProps = PropsWithChildren<{
@@ -17,16 +17,17 @@ export const PlaylistProvider = ({
   children,
   videos,
 }: PlaylistProviderProps) => {
-  const [, , service] = useMachine(playlistMachine, { context: { videos } });
+  const playlistService = useInterpret(playlistMachine, {
+    context: { videos },
+  });
 
   return (
-    <PlaylistContext.Provider value={{ service }}>
+    <PlaylistContext.Provider value={{ playlistService }}>
       {children}
     </PlaylistContext.Provider>
   );
 };
 
 export const usePlaylistContext = () => {
-  const { service } = useContext(PlaylistContext);
-  return useActor(service);
+  return useContext(PlaylistContext);
 };

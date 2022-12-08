@@ -1,9 +1,23 @@
+import React, { useEffect } from "react";
 import { useActor } from "@xstate/react";
 import { usePlaylistContext } from "./context";
+import { createPlayerMachine } from "./playerMachine";
+import { ActorRefFrom } from "xstate";
 
-export const Player = ({ element }: { element: any }) => {
-  const [{ context }] = usePlaylistContext();
-  const [state, send] = useActor(context.player!);
+type VideoProps = {
+  playerRef: ActorRefFrom<ReturnType<typeof createPlayerMachine>>;
+};
+export const Video = ({ playerRef }: VideoProps) => {
+  const videoEl = React.useRef<HTMLVideoElement>(null);
+  const [state, send] = useActor(playerRef);
+
+  useEffect(() => {
+    if (videoEl.current) {
+      send({ type: "LOADED", videoRef: videoEl.current });
+    }
+  }, [videoEl, send]);
+
+  console.log(state.value);
 
   return (
     <div className="relative w-full h-full">
@@ -11,7 +25,7 @@ export const Player = ({ element }: { element: any }) => {
         <video
           className="w-full h-full"
           src={state.context.url}
-          ref={element}
+          ref={videoEl}
           onTimeUpdate={() => {
             // TODO: send action to child machine
           }}
@@ -66,4 +80,13 @@ export const Player = ({ element }: { element: any }) => {
       </div>
     </div>
   );
+};
+
+export const Player = () => {
+  const { playlistService } = usePlaylistContext();
+  const [state] = useActor(playlistService);
+
+  if (state.matches("loading")) return <div>Loading...</div>;
+
+  return <Video playerRef={state.context.player!} />;
 };
