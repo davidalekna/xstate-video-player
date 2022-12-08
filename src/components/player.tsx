@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useActor } from "@xstate/react";
+import { useActor, useMachine } from "@xstate/react";
 import { usePlaylistContext } from "./context";
 import { createPlayerMachine } from "./playerMachine";
 import { ActorRefFrom } from "xstate";
@@ -15,7 +15,6 @@ export const Video = ({ playerRef }: VideoProps) => {
 
   useEffect(() => {
     if (videoEl.current) {
-      console.log("SENT");
       send({ type: "LOADED", videoRef: videoEl.current });
     }
   }, [videoEl, send]);
@@ -38,10 +37,14 @@ export const Video = ({ playerRef }: VideoProps) => {
             className="text-white"
             onClick={() => {
               // toggle play
-              send("PLAY");
+              if (state.matches("ready.playing")) {
+                send("PAUSE");
+              } else {
+                send("PLAY");
+              }
             }}
           >
-            {state.matches("playing") ? "pause" : "play"}
+            {state.matches("ready.playing") ? "pause" : "play"}
           </button>
         </div>
         <div className="flex flex-auto">
@@ -85,7 +88,7 @@ export const Video = ({ playerRef }: VideoProps) => {
 
 export const Player = () => {
   const { playlistService } = usePlaylistContext();
-  const [state] = useActor(playlistService);
+  const [state] = useMachine(playlistService.machine);
 
   if (state.matches("loading")) return <div>Loading...</div>;
 

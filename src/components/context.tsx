@@ -7,7 +7,7 @@ type PlaylistProviderState = {
   playlistService: InterpreterFrom<typeof playlistMachine>;
 };
 const PlaylistContext = createContext<PlaylistProviderState>({
-  playlistService: {} as any,
+  playlistService: {} as InterpreterFrom<typeof playlistMachine>,
 });
 
 type PlaylistProviderProps = PropsWithChildren<{
