@@ -1,25 +1,21 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import * as React from "react";
+import { videos } from "./api";
+import { PlaylistProvider } from "./components/context";
+import { Player } from "./components/player";
+import { Playlist } from "./components/playlist";
 
 function App() {
+  const element = React.useRef<HTMLVideoElement>(null);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <PlaylistProvider videos={videos}>
+      <div className="flex w-full justify-center bg-gray-900">
+        <div className="flex w-full max-w-[1600px] max-h-[700px] p-10 gap-5">
+          <Player element={element} />
+          <Playlist />
+        </div>
+      </div>
+    </PlaylistProvider>
   );
 }
 
