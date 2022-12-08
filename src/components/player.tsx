@@ -4,6 +4,8 @@ import { usePlaylistContext } from "./context";
 import { createPlayerMachine } from "./playerMachine";
 import { ActorRefFrom } from "xstate";
 
+// NOTE: child actor doesn't accept actions 😤
+
 type VideoProps = {
   playerRef: ActorRefFrom<ReturnType<typeof createPlayerMachine>>;
 };
@@ -40,7 +42,7 @@ export const Video = ({ playerRef }: VideoProps) => {
               send("PLAY");
             }}
           >
-            {state.context.playing ? "pause" : "play"}
+            {state.matches("playing") ? "pause" : "play"}
           </button>
         </div>
         <div className="flex flex-auto">
@@ -88,5 +90,5 @@ export const Player = () => {
 
   if (state.matches("loading")) return <div>Loading...</div>;
 
-  return <Video playerRef={state.context.player!} />;
+  return <Video playerRef={state.context.playerRef!} />;
 };

@@ -1,6 +1,31 @@
 import { assign, createMachine } from "xstate";
+import { PlaylistMachineContext } from "./playlistMachine";
 
-export const createPlayerMachine = (context: any) => {
+type PlayerMachineEvents =
+  | { type: "LOADED"; videoRef: HTMLVideoElement }
+  | { type: "FAIL" }
+  | { type: "RETRY" }
+  | { type: "PLAY" }
+  | { type: "PAUSE" }
+  | { type: "END" }
+  | { type: "NEXT" }
+  | { type: "PREV" }
+  | { type: "FORWARD" }
+  | { type: "BACKWARD" }
+  | { type: "SOUND" }
+  | { type: "PLAYBACK_RATE" };
+
+type PlayerMachineContext = {
+  url: string;
+  videoRef: HTMLVideoElement | null;
+  progress: number;
+  muted: boolean;
+  speed: number;
+};
+
+export const createPlayerMachine = (
+  video: PlaylistMachineContext["videos"][0]
+) => {
   return createMachine(
     {
       id: "Player",
@@ -10,8 +35,8 @@ export const createPlayerMachine = (context: any) => {
           on: {
             LOADED: {
               target: "ready",
-              actions: assign<any, any>({
-                videoRef: (_context: any, event: any) => event.videoRef,
+              actions: assign<PlayerMachineContext, any>({
+                videoRef: (_context, event) => event.videoRef,
               }),
             },
           },
@@ -51,37 +76,18 @@ export const createPlayerMachine = (context: any) => {
         },
       },
       schema: {
-        context: {} as {
-          url: string;
-          videoRef: HTMLVideoElement | null;
-          progress: number;
-          muted: boolean;
-          speed: number;
-          playing: boolean;
-        },
-        events: {} as
-          | { type: "LOADED"; videoRef: HTMLVideoElement }
-          | { type: "FAIL" }
-          | { type: "RETRY" }
-          | { type: "PLAY" }
-          | { type: "PAUSE" }
-          | { type: "END" }
-          | { type: "NEXT" }
-          | { type: "PREV" }
-          | { type: "FORWARD" }
-          | { type: "BACKWARD" }
-          | { type: "SOUND" }
-          | { type: "PLAYBACK_RATE" },
+        context: {} as PlayerMachineContext,
+        events: {} as PlayerMachineEvents,
       },
       context: {
-        url: context.url,
+        url: video.url,
         videoRef: null,
-        playing: false,
         progress: 0,
         muted: false,
         speed: 0,
       },
       predictableActionArguments: true,
+      preserveActionOrder: true,
     },
     {
       actions: {
