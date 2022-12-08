@@ -1,7 +1,7 @@
 import { usePlaylistContext } from "./context";
 
 export const Playlist = () => {
-  const [state] = usePlaylistContext();
+  const [state, send] = usePlaylistContext();
 
   return (
     <div className="flex flex-none w-[400px]">
@@ -11,7 +11,10 @@ export const Playlist = () => {
         </div>
         <div className="flex flex-col gap-5 p-5 overflow-y-auto">
           {state.context.videos.map((item) => (
-            <div className="flex items-center p-5 w-full h-18 bg-gray-700">
+            <div
+              className="flex items-center p-5 w-full h-18 bg-gray-700"
+              onClick={() => send("PLAY")}
+            >
               {item.thumbnail.split("/").at(-1)?.replace(".jpg", "")}
             </div>
           ))}
