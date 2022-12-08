@@ -33,7 +33,13 @@ export const playlistMachine = createMachine({
     },
     ready: {
       on: {
-        PLAY: {},
+        PLAY: {
+          actions: (context) => {
+            // ERROR: seems like an old snapshot 😤
+            console.log(context.playerRef?.getSnapshot());
+            context.playerRef?.send({ type: "NEXT", url: context.videos[1] });
+          },
+        },
         AUTOPLAY: {},
         LOOP: {
           actions: assign<any, any>({

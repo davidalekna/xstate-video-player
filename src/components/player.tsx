@@ -13,6 +13,8 @@ export const Video = ({ playerRef }: VideoProps) => {
   const videoEl = React.useRef<HTMLVideoElement>(null);
   const [state, send] = useActor(playerRef);
 
+  console.log(state.context);
+
   useEffect(() => {
     if (videoEl.current) {
       send({ type: "LOADED", videoRef: videoEl.current });

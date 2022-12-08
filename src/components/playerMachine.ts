@@ -8,7 +8,7 @@ type PlayerMachineEvents =
   | { type: "PLAY" }
   | { type: "PAUSE" }
   | { type: "END" }
-  | { type: "NEXT" }
+  | { type: "NEXT"; url: string }
   | { type: "PREV" }
   | { type: "FORWARD" }
   | { type: "BACKWARD" }
@@ -71,7 +71,15 @@ export const createPlayerMachine = (
             ended: {},
           },
           on: {
-            NEXT: {},
+            NEXT: {
+              target: "loading",
+              actions: assign<PlayerMachineContext, any>({
+                url: (_context, event) => {
+                  console.log("NEXT FROM PARENT");
+                  return event.url;
+                },
+              }),
+            },
             PREV: {},
             SOUND: {},
             PLAYBACK_RATE: {},
