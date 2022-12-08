@@ -26,7 +26,8 @@ export const playlistMachine = createMachine({
   states: {
     loading: {
       entry: assign<PlaylistMachineContext>({
-        playerRef: (context) => spawn(createPlayerMachine(context.videos[0])),
+        playerRef: (context) =>
+          spawn(createPlayerMachine(context.videos[0]), "player"),
       }),
       always: "ready",
     },

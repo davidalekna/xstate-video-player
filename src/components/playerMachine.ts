@@ -36,7 +36,10 @@ export const createPlayerMachine = (
             LOADED: {
               target: "ready",
               actions: assign<PlayerMachineContext, any>({
-                videoRef: (_context, event) => event.videoRef,
+                videoRef: (_context, event) => {
+                  console.log("LOADED");
+                  return event.videoRef;
+                },
               }),
             },
           },

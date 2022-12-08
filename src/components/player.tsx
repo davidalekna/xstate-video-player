@@ -15,11 +15,10 @@ export const Video = ({ playerRef }: VideoProps) => {
 
   useEffect(() => {
     if (videoEl.current) {
+      console.log("SENT");
       send({ type: "LOADED", videoRef: videoEl.current });
     }
   }, [videoEl, send]);
-
-  console.log(state.value);
 
   return (
     <div className="relative w-full h-full">
