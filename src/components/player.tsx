@@ -4,8 +4,6 @@ import { usePlaylistContext } from "./context";
 import { createPlayerMachine } from "./playerMachine";
 import { ActorRefFrom } from "xstate";
 
-// TODO: find out why unable to send events
-
 type VideoProps = {
   playerRef: ActorRefFrom<ReturnType<typeof createPlayerMachine>>;
 };
@@ -19,29 +17,34 @@ export const Video = ({ playerRef }: VideoProps) => {
     }
   }, [videoEl, send]);
 
-  useEffect(() => {
-    console.log("TEST");
-    console.log(state.value);
-    send("TEST");
-  }, []);
-
   return (
-    <div className="aspect-w-16 w-full aspect-h-9 flex bg-black overflow-hidden">
-      {state.context.buffering && (
-        <div className="absolute flex items-center justify-center top-0 right-0 bottom-0 left-0 z-10">
-          Buffering
-        </div>
-      )}
-      <video
-        ref={videoEl}
-        className="w-full h-full"
-        src={state.context.url}
-        muted={state.context.muted}
-        onWaiting={() => send({ type: "BUFFERING", state: true })}
-        onPlaying={() => send({ type: "BUFFERING", state: false })}
-        onTimeUpdate={() => send("TRACK")}
-      />
-    </div>
+    <>
+      <button
+        className="bg-white p-5"
+        onClick={() => {
+          console.log(state);
+          send({ type: "LOADED", videoRef: videoEl.current! });
+        }}
+      >
+        Load
+      </button>
+      <div className="aspect-w-16 w-full aspect-h-9 flex bg-black overflow-hidden">
+        {state.context.buffering && (
+          <div className="absolute flex items-center justify-center top-0 right-0 bottom-0 left-0 z-10">
+            Buffering
+          </div>
+        )}
+        <video
+          ref={videoEl}
+          className="w-full h-full"
+          src={state.context.url}
+          muted={state.context.muted}
+          onWaiting={() => send({ type: "BUFFERING", state: true })}
+          onPlaying={() => send({ type: "BUFFERING", state: false })}
+          onTimeUpdate={() => send("TRACK")}
+        />
+      </div>
+    </>
   );
 };
 
@@ -101,14 +104,11 @@ const Controls = ({ playerRef }: VideoProps) => {
 export const Player = () => {
   const { playlistService } = usePlaylistContext();
   const [state] = useActor(playlistService);
-  const { playerRef } = state.context;
-
-  if (!playerRef) return null;
 
   return (
     <div className="relative w-full h-full">
-      <Video playerRef={playerRef} />
-      <Controls playerRef={playerRef} />
+      <Video playerRef={state.context.playerRef!} />
+      <Controls playerRef={state.context.playerRef!} />
     </div>
   );
 };
