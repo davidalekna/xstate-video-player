@@ -44,8 +44,6 @@ export const playlistMachine = createMachine({
         playerRef: (context) => {
           return spawn(createPlayerMachine(context.videos[0]), {
             name: "player",
-            autoForward: true,
-            sync: true,
           });
         },
       }),
@@ -55,7 +53,7 @@ export const playlistMachine = createMachine({
       on: {
         PLAY: {
           actions: (context) => {
-            console.log("PLAY");
+            console.log("PLAY > SELECT", context.playerRef);
             context.playerRef?.send({
               type: "SELECT",
               url: context.videos[5].url,

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useActor, useMachine } from "@xstate/react";
+import { useActor } from "@xstate/react";
 import { usePlaylistContext } from "./context";
 import { createPlayerMachine } from "./playerMachine";
 import { ActorRefFrom } from "xstate";
@@ -13,9 +13,12 @@ export const Video = ({ playerRef }: VideoProps) => {
 
   useEffect(() => {
     if (videoEl.current) {
+      console.log("LOADED");
       send({ type: "LOADED", videoRef: videoEl.current });
     }
   }, [videoEl, send]);
+
+  console.log(state.value);
 
   return (
     <div className="aspect-w-16 w-full aspect-h-9 flex bg-black overflow-hidden">
@@ -92,9 +95,7 @@ const Controls = ({ playerRef }: VideoProps) => {
 
 export const Player = () => {
   const { playlistService } = usePlaylistContext();
-  const [state] = useMachine(playlistService.machine);
-
-  if (state.matches("loading")) return <div>Playlist Loading...</div>;
+  const [state] = useActor(playlistService);
 
   return (
     <div className="relative w-full h-full">
