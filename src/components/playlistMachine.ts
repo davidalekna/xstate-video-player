@@ -23,35 +23,6 @@ export type PlaylistMachineContext = {
 export const playlistMachine = createMachine({
   id: "Playlist",
   initial: "loading",
-  states: {
-    loading: {
-      entry: assign<PlaylistMachineContext>({
-        playerRef: (context) =>
-          spawn(createPlayerMachine(context.videos[0]), "player"),
-      }),
-      always: "ready",
-    },
-    ready: {
-      on: {
-        PLAY: {
-          actions: (context) => {
-            // ERROR: seems like an old snapshot 😤
-            console.log(context.playerRef?.getSnapshot());
-            context.playerRef?.send({ type: "NEXT", url: context.videos[1] });
-          },
-        },
-        AUTOPLAY: {},
-        LOOP: {
-          actions: assign<any, any>({
-            loop: true,
-          }),
-        },
-        SHUFFLE: {},
-        NEXT: {},
-        PREV: {},
-      },
-    },
-  },
   schema: {
     context: {} as PlaylistMachineContext,
     events: {} as PlayerMachineEvents,
@@ -67,4 +38,38 @@ export const playlistMachine = createMachine({
   },
   predictableActionArguments: true,
   preserveActionOrder: true,
+  states: {
+    loading: {
+      entry: assign<PlaylistMachineContext>({
+        playerRef: (context) => {
+          return spawn(createPlayerMachine(context.videos[0]), {
+            name: "player",
+          });
+        },
+      }),
+      always: "ready",
+    },
+    ready: {
+      on: {
+        PLAY: {
+          actions: (context) => {
+            console.log("PLAY > SELECT", context.playerRef);
+            context.playerRef?.send({
+              type: "SELECT",
+              url: context.videos[5].url,
+            });
+          },
+        },
+        AUTOPLAY: {},
+        LOOP: {
+          actions: assign<any, any>({
+            loop: true,
+          }),
+        },
+        SHUFFLE: {},
+        NEXT: {},
+        PREV: {},
+      },
+    },
+  },
 });

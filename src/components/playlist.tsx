@@ -1,9 +1,9 @@
-import { useActor } from "@xstate/react";
+import { useSelector } from "@xstate/react";
 import { usePlaylistContext } from "./context";
 
 export const Playlist = () => {
   const { playlistService } = usePlaylistContext();
-  const [state, send] = useActor(playlistService);
+  const videos = useSelector(playlistService, ({ context }) => context.videos);
 
   return (
     <div className="flex flex-none w-[400px]">
@@ -12,11 +12,11 @@ export const Playlist = () => {
           header
         </div>
         <div className="flex flex-col gap-5 p-5 overflow-y-auto">
-          {state.context.videos.map((item, index) => (
+          {videos.map((item, index) => (
             <button
               key={index}
               className="flex items-center p-3 gap-3 w-full h-18 bg-gray-700"
-              onClick={() => send("PLAY")}
+              onClick={() => playlistService.send("PLAY")}
             >
               <div className="h-14">
                 <img

@@ -2,25 +2,31 @@ import { assign, createMachine } from "xstate";
 import { PlaylistMachineContext } from "./playlistMachine";
 
 type PlayerMachineEvents =
+  | { type: "TEST" }
   | { type: "LOADED"; videoRef: HTMLVideoElement }
-  | { type: "FAIL" }
+  | { type: "SELECT"; url: string }
   | { type: "RETRY" }
   | { type: "PLAY" }
   | { type: "PAUSE" }
   | { type: "END" }
-  | { type: "NEXT"; url: string }
+  | { type: "PROGRESS"; progress: number }
+  | { type: "TRACK" }
+  | { type: "NEXT" }
   | { type: "PREV" }
+  | { type: "BUFFERING"; state: boolean }
   | { type: "FORWARD" }
   | { type: "BACKWARD" }
   | { type: "SOUND" }
-  | { type: "PLAYBACK_RATE" };
+  | { type: "MUTE" }
+  | { type: "PLAYBACK_RATE"; playbackRate: number };
 
 type PlayerMachineContext = {
   url: string;
   videoRef: HTMLVideoElement | null;
   progress: number;
+  buffering: boolean;
   muted: boolean;
-  speed: number;
+  playbackRate: number;
 };
 
 export const createPlayerMachine = (
@@ -28,18 +34,32 @@ export const createPlayerMachine = (
 ) => {
   return createMachine(
     {
-      id: "Player",
+      id: "player",
       initial: "loading",
+      schema: {
+        context: {} as PlayerMachineContext,
+        events: {} as PlayerMachineEvents,
+      },
+      context: {
+        url: video.url,
+        videoRef: null,
+        buffering: false,
+        progress: 0,
+        muted: false,
+        playbackRate: 0,
+      },
+      predictableActionArguments: true,
+      preserveActionOrder: true,
       states: {
         loading: {
           on: {
+            TEST: {
+              actions: [() => console.log("TESTING")],
+            },
             LOADED: {
               target: "ready",
               actions: assign<PlayerMachineContext, any>({
-                videoRef: (_context, event) => {
-                  console.log("LOADED");
-                  return event.videoRef;
-                },
+                videoRef: (_context, event) => event.videoRef,
               }),
             },
           },
@@ -64,6 +84,35 @@ export const createPlayerMachine = (
                 END: {
                   target: "ended",
                 },
+                TRACK: {
+                  actions: assign<PlayerMachineContext, any>({
+                    progress: (context, event) => {
+                      if (!context.videoRef) return 0;
+                      const progress =
+                        (context.videoRef.currentTime /
+                          context.videoRef.duration) *
+                        100;
+                      return progress;
+                    },
+                  }),
+                },
+                PROGRESS: {
+                  actions: assign<PlayerMachineContext, any>({
+                    progress: (context, event) => {
+                      const manualChange = event.progress;
+                      if (context.videoRef) {
+                        context.videoRef.currentTime =
+                          (context.videoRef.duration / 100) * manualChange;
+                      }
+                      return manualChange;
+                    },
+                  }),
+                },
+                BUFFERING: {
+                  actions: assign<PlayerMachineContext, any>({
+                    buffering: (context, event) => event.state,
+                  }),
+                },
                 FORWARD: {},
                 BACKWARD: {},
               },
@@ -71,34 +120,38 @@ export const createPlayerMachine = (
             ended: {},
           },
           on: {
-            NEXT: {
+            SELECT: {
               target: "loading",
               actions: assign<PlayerMachineContext, any>({
-                url: (_context, event) => {
-                  console.log("NEXT FROM PARENT");
+                url: (context, event) => {
+                  console.log("CALLED");
                   return event.url;
                 },
               }),
             },
-            PREV: {},
+            MUTE: {
+              actions: assign<PlayerMachineContext, any>({
+                muted: (context) => !context.muted,
+              }),
+            },
             SOUND: {},
-            PLAYBACK_RATE: {},
+            PLAYBACK_RATE: {
+              actions: assign<PlayerMachineContext, any>({
+                playbackRate: (context, event) => {
+                  if (context.videoRef) {
+                    context.videoRef.playbackRate = event.playbackRate;
+                  }
+                  return event.playbackRate;
+                },
+              }),
+            },
           },
         },
       },
-      schema: {
-        context: {} as PlayerMachineContext,
-        events: {} as PlayerMachineEvents,
+      on: {
+        PREV: {},
+        NEXT: {},
       },
-      context: {
-        url: video.url,
-        videoRef: null,
-        progress: 0,
-        muted: false,
-        speed: 0,
-      },
-      predictableActionArguments: true,
-      preserveActionOrder: true,
     },
     {
       actions: {

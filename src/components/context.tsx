@@ -1,5 +1,5 @@
 import { useInterpret } from "@xstate/react";
-import { createContext, PropsWithChildren, useContext } from "react";
+import React, { createContext, PropsWithChildren, useContext } from "react";
 import { InterpreterFrom } from "xstate";
 import { playlistMachine } from "./playlistMachine";
 
