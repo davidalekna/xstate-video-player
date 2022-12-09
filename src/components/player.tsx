@@ -4,6 +4,8 @@ import { usePlaylistContext } from "./context";
 import { createPlayerMachine } from "./playerMachine";
 import { ActorRefFrom } from "xstate";
 
+// TODO: find out why unable to send events
+
 type VideoProps = {
   playerRef: ActorRefFrom<ReturnType<typeof createPlayerMachine>>;
 };
@@ -13,12 +15,15 @@ export const Video = ({ playerRef }: VideoProps) => {
 
   useEffect(() => {
     if (videoEl.current) {
-      console.log("LOADED");
       send({ type: "LOADED", videoRef: videoEl.current });
     }
   }, [videoEl, send]);
 
-  console.log(state.value);
+  useEffect(() => {
+    console.log("TEST");
+    console.log(state.value);
+    send("TEST");
+  }, []);
 
   return (
     <div className="aspect-w-16 w-full aspect-h-9 flex bg-black overflow-hidden">
@@ -96,11 +101,14 @@ const Controls = ({ playerRef }: VideoProps) => {
 export const Player = () => {
   const { playlistService } = usePlaylistContext();
   const [state] = useActor(playlistService);
+  const { playerRef } = state.context;
+
+  if (!playerRef) return null;
 
   return (
     <div className="relative w-full h-full">
-      <Video playerRef={state.context.playerRef!} />
-      <Controls playerRef={state.context.playerRef!} />
+      <Video playerRef={playerRef} />
+      <Controls playerRef={playerRef} />
     </div>
   );
 };
