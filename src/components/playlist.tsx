@@ -17,7 +17,9 @@ export const Playlist = () => {
               <button
                 key={index}
                 className="flex items-center p-3 gap-3 w-full h-18 bg-gray-700"
-                onClick={() => playlistService.send("PLAY")}
+                onClick={() =>
+                  playlistService.send({ type: "PLAY", video: item })
+                }
               >
                 <div className="h-14">
                   <img

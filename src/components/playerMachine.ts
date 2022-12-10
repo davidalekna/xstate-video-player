@@ -1,51 +1,56 @@
-import { assign, createMachine } from "xstate";
-import { PlaylistMachineContext } from "./playlistMachine";
+import {assign, createMachine} from 'xstate'
+import {PlaylistMachineContext} from './playlistMachine'
 
 type PlayerMachineEvents =
-  | { type: "LOADED"; videoRef: HTMLVideoElement }
-  | { type: "SELECT"; url: string }
-  | { type: "RETRY" }
-  | { type: "PLAY" }
-  | { type: "PAUSE" }
-  | { type: "END" }
-  | { type: "PROGRESS"; progress: number }
-  | { type: "TRACK" }
-  | { type: "NEXT" }
-  | { type: "PREV" }
-  | { type: "BUFFERING"; state: boolean }
-  | { type: "FORWARD" }
-  | { type: "BACKWARD" }
-  | { type: "SOUND" }
-  | { type: "MUTE" }
-  | { type: "PLAYBACK_RATE"; playbackRate: number };
+  | {type: 'LOADED'; videoRef: HTMLVideoElement}
+  | {type: 'SELECT'; url: string}
+  | {type: 'RETRY'}
+  | {type: 'PLAY'}
+  | {type: 'PAUSE'}
+  | {type: 'END'}
+  | {type: 'PROGRESS'; progress: number}
+  | {type: 'TRACK'}
+  | {type: 'NEXT'}
+  | {type: 'PREV'}
+  | {type: 'BUFFERING'; state: boolean}
+  | {type: 'FORWARD'}
+  | {type: 'BACKWARD'}
+  | {type: 'SOUND'}
+  | {type: 'MUTE'}
+  | {type: 'PLAYBACK_RATE'; playbackRate: number}
 
 type PlayerMachineContext = {
-  url: string;
-  videoRef: HTMLVideoElement | null;
-  progress: number;
-  buffering: boolean;
-  muted: boolean;
-  playbackRate: number;
-};
+  url: string
+  videoRef: HTMLVideoElement | null
+  progress: number
+  buffering: boolean
+  muted: boolean
+  playbackRate: number
+}
+
+const initialContext: PlayerMachineContext = {
+  url: '',
+  videoRef: null,
+  buffering: false,
+  progress: 0,
+  muted: false,
+  playbackRate: 0,
+}
 
 export const createPlayerMachine = (
-  video: PlaylistMachineContext["videos"][0]
+  video: PlaylistMachineContext['videos'][0],
 ) => {
   return createMachine(
     {
-      id: "player",
-      initial: "loading",
+      id: 'player',
+      initial: 'loading',
       schema: {
         context: {} as PlayerMachineContext,
         events: {} as PlayerMachineEvents,
       },
       context: {
+        ...initialContext,
         url: video.url,
-        videoRef: null,
-        buffering: false,
-        progress: 0,
-        muted: false,
-        playbackRate: 0,
       },
       predictableActionArguments: true,
       preserveActionOrder: true,
@@ -53,7 +58,7 @@ export const createPlayerMachine = (
         loading: {
           on: {
             LOADED: {
-              target: "ready",
+              target: 'ready',
               actions: assign<PlayerMachineContext, any>({
                 videoRef: (_context, event) => event.videoRef,
               }),
@@ -61,46 +66,46 @@ export const createPlayerMachine = (
           },
         },
         ready: {
-          initial: "paused",
+          initial: 'paused',
           states: {
             paused: {
-              entry: ["pause"],
+              entry: ['pause'],
               on: {
                 PLAY: {
-                  target: "playing",
+                  target: 'playing',
                 },
               },
             },
             playing: {
-              entry: ["play"],
+              entry: ['play'],
               on: {
                 PAUSE: {
-                  target: "paused",
+                  target: 'paused',
                 },
                 END: {
-                  target: "ended",
+                  target: 'ended',
                 },
                 TRACK: {
                   actions: assign<PlayerMachineContext, any>({
                     progress: (context, event) => {
-                      if (!context.videoRef) return 0;
+                      if (!context.videoRef) return 0
                       const progress =
                         (context.videoRef.currentTime /
                           context.videoRef.duration) *
-                        100;
-                      return progress;
+                        100
+                      return progress
                     },
                   }),
                 },
                 PROGRESS: {
                   actions: assign<PlayerMachineContext, any>({
                     progress: (context, event) => {
-                      const manualChange = event.progress;
+                      const manualChange = event.progress
                       if (context.videoRef) {
                         context.videoRef.currentTime =
-                          (context.videoRef.duration / 100) * manualChange;
+                          (context.videoRef.duration / 100) * manualChange
                       }
-                      return manualChange;
+                      return manualChange
                     },
                   }),
                 },
@@ -117,17 +122,17 @@ export const createPlayerMachine = (
           },
           on: {
             SELECT: {
-              target: "loading",
-              actions: assign<PlayerMachineContext, any>({
-                url: (context, event) => {
-                  console.log("CALLED");
-                  return event.url;
-                },
+              target: 'ready',
+              actions: assign<PlayerMachineContext, any>((context, event) => {
+                return {
+                  ...initialContext,
+                  url: event.url,
+                }
               }),
             },
             MUTE: {
               actions: assign<PlayerMachineContext, any>({
-                muted: (context) => !context.muted,
+                muted: context => !context.muted,
               }),
             },
             SOUND: {},
@@ -135,9 +140,9 @@ export const createPlayerMachine = (
               actions: assign<PlayerMachineContext, any>({
                 playbackRate: (context, event) => {
                   if (context.videoRef) {
-                    context.videoRef.playbackRate = event.playbackRate;
+                    context.videoRef.playbackRate = event.playbackRate
                   }
-                  return event.playbackRate;
+                  return event.playbackRate
                 },
               }),
             },
@@ -151,9 +156,9 @@ export const createPlayerMachine = (
     },
     {
       actions: {
-        play: (context) => context.videoRef?.play(),
-        pause: (context) => context.videoRef?.pause(),
+        pause: context => context.videoRef?.pause(),
+        play: context => context.videoRef?.play(),
       },
-    }
-  );
-};
+    },
+  )
+}
