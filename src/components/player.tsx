@@ -4,8 +4,6 @@ import { usePlaylistContext } from "./context";
 import { createPlayerMachine } from "./playerMachine";
 import { ActorRefFrom } from "xstate";
 
-// TODO: find out why unable to send events
-
 type VideoProps = {
   playerRef: ActorRefFrom<ReturnType<typeof createPlayerMachine>>;
 };
@@ -19,14 +17,8 @@ export const Video = ({ playerRef }: VideoProps) => {
     }
   }, [videoEl, send]);
 
-  useEffect(() => {
-    console.log("TEST");
-    console.log(state.value);
-    send("TEST");
-  }, []);
-
   return (
-    <div className="aspect-w-16 w-full aspect-h-9 flex bg-black overflow-hidden">
+    <>
       {state.context.buffering && (
         <div className="absolute flex items-center justify-center top-0 right-0 bottom-0 left-0 z-10">
           Buffering
@@ -41,7 +33,7 @@ export const Video = ({ playerRef }: VideoProps) => {
         onPlaying={() => send({ type: "BUFFERING", state: false })}
         onTimeUpdate={() => send("TRACK")}
       />
-    </div>
+    </>
   );
 };
 
@@ -106,8 +98,10 @@ export const Player = () => {
   if (!playerRef) return null;
 
   return (
-    <div className="relative w-full h-full">
-      <Video playerRef={playerRef} />
+    <div className="relative w-full">
+      <div className="aspect-w-16 w-full aspect-h-9 flex bg-black overflow-hidden">
+        <Video playerRef={playerRef} />
+      </div>
       <Controls playerRef={playerRef} />
     </div>
   );

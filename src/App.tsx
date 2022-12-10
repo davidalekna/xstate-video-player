@@ -7,7 +7,7 @@ function App() {
   return (
     <PlaylistProvider videos={videos}>
       <div className="flex w-full justify-center bg-gray-900">
-        <div className="flex w-full max-w-[1600px] max-h-[630px] p-10 gap-5">
+        <div className="flex w-full max-w-[1600px] p-10 gap-5">
           <Player />
           <Playlist />
         </div>

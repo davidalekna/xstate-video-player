@@ -2,7 +2,6 @@ import { assign, createMachine } from "xstate";
 import { PlaylistMachineContext } from "./playlistMachine";
 
 type PlayerMachineEvents =
-  | { type: "TEST" }
   | { type: "LOADED"; videoRef: HTMLVideoElement }
   | { type: "SELECT"; url: string }
   | { type: "RETRY" }
@@ -53,9 +52,6 @@ export const createPlayerMachine = (
       states: {
         loading: {
           on: {
-            TEST: {
-              actions: [() => console.log("TESTING")],
-            },
             LOADED: {
               target: "ready",
               actions: assign<PlayerMachineContext, any>({
