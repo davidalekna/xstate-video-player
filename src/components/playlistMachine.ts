@@ -1,4 +1,5 @@
 import {ActorRefFrom, assign, createMachine, spawn} from 'xstate'
+import {Video} from '../api'
 import {createPlayerMachine} from './playerMachine'
 
 type PlayerMachineEvents =
@@ -15,8 +16,10 @@ export type PlaylistMachineContext = {
   videos: any[]
   playerRef: ActorRefFrom<ReturnType<typeof createPlayerMachine>> | null
   loop: boolean
-  playing: string
+  muted: boolean
+  playing: Video | null
   shuffle: boolean
+  playbackRate: number
   next: string
   prev: string
 }
@@ -31,10 +34,12 @@ export const playlistMachine = createMachine({
   context: {
     autoplay: false,
     videos: [],
-    playing: 'id-1',
+    playing: null,
+    muted: false,
     playerRef: null,
     loop: false,
     shuffle: false,
+    playbackRate: 1,
     next: 'null',
     prev: 'null',
   },
@@ -46,6 +51,7 @@ export const playlistMachine = createMachine({
         const [video] = context.videos
         return {
           ...context,
+          playing: video,
           playerRef: spawn(createPlayerMachine(video), 'player'),
         }
       }),
@@ -62,13 +68,13 @@ export const playlistMachine = createMachine({
 
             return {
               ...context,
-              playing: 'id-2',
+              playing: event.video,
             }
           }),
         },
         AUTOPLAY: {},
         LOOP: {
-          actions: assign<any, any>({
+          actions: assign<PlaylistMachineContext, any>({
             loop: true,
           }),
         },

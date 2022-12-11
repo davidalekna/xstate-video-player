@@ -105,7 +105,7 @@ export const Player = () => {
   return (
     <div className="relative w-full">
       <div className="aspect-w-16 w-full aspect-h-9 flex bg-black overflow-hidden">
-        <Video key={playing} playerRef={playerRef!} />
+        <Video key={playing?.url} playerRef={playerRef!} />
       </div>
       <Controls playerRef={playerRef!} />
     </div>
