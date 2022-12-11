@@ -10,20 +10,19 @@ type PlayerMachineEvents =
   | {type: 'END'}
   | {type: 'PROGRESS'; progress: number}
   | {type: 'TRACK'}
-  | {type: 'NEXT'}
-  | {type: 'PREV'}
-  | {type: 'BUFFERING'; state: boolean}
+  | {type: 'BUFFERING'}
   | {type: 'FORWARD'}
   | {type: 'BACKWARD'}
+  | {type: 'ERROR'}
   | {type: 'SOUND'}
   | {type: 'MUTE'}
   | {type: 'PLAYBACK_RATE'; playbackRate: number}
+  | {type: 'RESUME'}
 
 type PlayerMachineContext = {
   url: string
-  videoRef: HTMLVideoElement | null
+  videoRef: HTMLVideoElement
   progress: number
-  buffering: boolean
   muted: boolean
   playbackRate: number
 }
@@ -32,8 +31,7 @@ const initialContext: Omit<
   PlayerMachineContext,
   'muted' | 'url' | 'playbackRate'
 > = {
-  videoRef: null,
-  buffering: false,
+  videoRef: {} as any,
   progress: 0,
 }
 
@@ -66,6 +64,12 @@ export const createPlayerMachine = (
           },
         },
       },
+      buffering: {
+        id: 'buffering',
+        on: {
+          RESUME: 'ready.playing',
+        },
+      },
       ready: {
         initial: 'paused',
         states: {
@@ -89,7 +93,6 @@ export const createPlayerMachine = (
               TRACK: {
                 actions: assign<PlayerMachineContext, any>({
                   progress: (context, event) => {
-                    if (!context.videoRef) return 0
                     const progress =
                       (context.videoRef.currentTime /
                         context.videoRef.duration) *
@@ -100,21 +103,15 @@ export const createPlayerMachine = (
               },
               PROGRESS: {
                 actions: assign<PlayerMachineContext, any>({
-                  progress: (context, event) => {
-                    const manualChange = event.progress
-                    if (context.videoRef) {
-                      context.videoRef.currentTime =
-                        (context.videoRef.duration / 100) * manualChange
-                    }
+                  progress: ({videoRef}, event) => {
+                    let manualChange = event.progress
+                    let update = (videoRef.duration / 100) * manualChange
+                    videoRef.currentTime = update
                     return manualChange
                   },
                 }),
               },
-              BUFFERING: {
-                actions: assign<PlayerMachineContext, any>({
-                  buffering: (context, event) => event.state,
-                }),
-              },
+              BUFFERING: '#buffering',
               FORWARD: {},
               BACKWARD: {},
             },
@@ -122,37 +119,35 @@ export const createPlayerMachine = (
           ended: {},
         },
         on: {
-          SELECT: {
-            target: 'loading',
-            actions: assign<PlayerMachineContext, any>((context, event) => {
-              return {
-                ...initialContext,
-                url: event.url,
-              }
-            }),
-          },
           MUTE: {
             actions: assign<PlayerMachineContext, any>({
               muted: context => !context.muted,
             }),
           },
           SOUND: {},
+          ERROR: 'error',
           PLAYBACK_RATE: {
             actions: assign<PlayerMachineContext, any>({
-              playbackRate: (context, event) => {
-                if (context.videoRef) {
-                  context.videoRef.playbackRate = event.playbackRate
-                }
+              playbackRate: ({videoRef}, event) => {
+                videoRef.playbackRate = event.playbackRate
                 return event.playbackRate
               },
             }),
           },
         },
       },
+      error: {},
     },
     on: {
-      PREV: {},
-      NEXT: {},
+      SELECT: {
+        target: 'loading',
+        actions: assign<PlayerMachineContext, any>((context, event) => {
+          return {
+            ...initialContext,
+            url: event.url,
+          }
+        }),
+      },
     },
   })
 }

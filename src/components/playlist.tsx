@@ -1,9 +1,9 @@
-import { useSelector } from "@xstate/react";
-import { usePlaylistContext } from "./context";
+import {useSelector} from '@xstate/react'
+import {usePlaylistContext} from './context'
 
 export const Playlist = () => {
-  const { playlistService } = usePlaylistContext();
-  const videos = useSelector(playlistService, ({ context }) => context.videos);
+  const {playlistService} = usePlaylistContext()
+  const videos = useSelector(playlistService, ({context}) => context.videos)
 
   return (
     <div className="flex flex-none basis-1/4">
@@ -18,7 +18,7 @@ export const Playlist = () => {
                 key={index}
                 className="flex items-center p-3 gap-3 w-full h-18 bg-gray-700"
                 onClick={() =>
-                  playlistService.send({ type: "PLAY", video: item })
+                  playlistService.send({type: 'SELECT', video: item})
                 }
               >
                 <div className="h-14">
@@ -29,7 +29,7 @@ export const Playlist = () => {
                   />
                 </div>
                 <div>
-                  {item.thumbnail.split("/").at(-1)?.replace(".jpg", "")}
+                  {item.thumbnail.split('/').at(-1)?.replace('.jpg', '')}
                 </div>
               </button>
             ))}
@@ -37,5 +37,5 @@ export const Playlist = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

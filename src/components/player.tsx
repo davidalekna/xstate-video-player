@@ -11,18 +11,22 @@ export const Video = ({playerRef}: VideoProps) => {
   const videoEl = React.useRef<HTMLVideoElement>(null)
   const [state, send] = useActor(playerRef)
 
-  // TODO: how to reset video player?
-  // console.log(state.history?.context.url !== state.context.url)
-
   useEffect(() => {
-    if (videoEl.current) {
-      send({type: 'LOADED', videoRef: videoEl.current})
-    }
+    if (!videoEl.current) return
+    send({type: 'LOADED', videoRef: videoEl.current})
   }, [videoEl, send])
+
+  if (state.matches('error')) {
+    return (
+      <div className="border text-white w-full h-full flex items-center justify-center">
+        Broken URL!
+      </div>
+    )
+  }
 
   return (
     <>
-      {state.context.buffering && (
+      {state.matches('buffering') && (
         <div className="absolute flex items-center justify-center top-0 right-0 bottom-0 left-0 z-10">
           Buffering
         </div>
@@ -33,8 +37,15 @@ export const Video = ({playerRef}: VideoProps) => {
         src={state.context.url}
         muted={state.context.muted}
         // poster={state.context.poster}
-        onWaiting={() => send({type: 'BUFFERING', state: true})}
-        onPlaying={() => send({type: 'BUFFERING', state: false})}
+        onWaiting={() => {
+          send({type: 'BUFFERING'})
+        }}
+        onError={() => send('ERROR')}
+        onLoadStart={() => console.log('onLoadStart')}
+        onCanPlay={() => {
+          console.log('onCanPlay')
+          send('RESUME')
+        }}
         onTimeUpdate={() => send('TRACK')}
       />
     </>
@@ -47,12 +58,11 @@ const Controls = ({playerRef}: VideoProps) => {
   return (
     <div className="flex items-center absolute left-0 bottom-0 right-0 w-full border h-16 px-6 gap-5">
       <div className="flex flex-none">
-        {state.matches('ready.playing') && (
+        {state.matches('ready.playing') ? (
           <button className="text-white" onClick={() => send('PAUSE')}>
             pause
           </button>
-        )}
-        {state.matches('ready.paused') && (
+        ) : (
           <button className="text-white" onClick={() => send('PLAY')}>
             play
           </button>
@@ -101,13 +111,14 @@ export const Player = () => {
     state => state.context.playerRef,
   )
   const playing = useSelector(playlistService, state => state.context.playing)
+  const [state] = useActor(playerRef!)
 
   return (
     <div className="relative w-full">
       <div className="aspect-w-16 w-full aspect-h-9 flex bg-black overflow-hidden">
         <Video key={playing?.url} playerRef={playerRef!} />
       </div>
-      <Controls playerRef={playerRef!} />
+      {!state.matches('error') && <Controls playerRef={playerRef!} />}
     </div>
   )
 }

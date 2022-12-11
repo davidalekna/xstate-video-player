@@ -4,7 +4,7 @@ import {createPlayerMachine} from './playerMachine'
 
 type PlayerMachineEvents =
   | {type: 'LOADED'}
-  | {type: 'PLAY'; video: any}
+  | {type: 'SELECT'; video: Video}
   | {type: 'AUTOPLAY'}
   | {type: 'LOOP'}
   | {type: 'SHUFFLE'}
@@ -13,15 +13,13 @@ type PlayerMachineEvents =
 
 export type PlaylistMachineContext = {
   autoplay: boolean
-  videos: any[]
+  videos: Video[]
   playerRef: ActorRefFrom<ReturnType<typeof createPlayerMachine>> | null
   loop: boolean
   muted: boolean
   playing: Video | null
   shuffle: boolean
   playbackRate: number
-  next: string
-  prev: string
 }
 
 export const playlistMachine = createMachine({
@@ -40,8 +38,6 @@ export const playlistMachine = createMachine({
     loop: false,
     shuffle: false,
     playbackRate: 1,
-    next: 'null',
-    prev: 'null',
   },
   predictableActionArguments: true,
   preserveActionOrder: true,
@@ -59,7 +55,7 @@ export const playlistMachine = createMachine({
     },
     ready: {
       on: {
-        PLAY: {
+        SELECT: {
           actions: assign<PlaylistMachineContext, any>((context, event) => {
             context.playerRef?.send({
               type: 'SELECT',
