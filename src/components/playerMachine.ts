@@ -1,9 +1,10 @@
 import {assign, createMachine} from 'xstate'
+import {Video} from '../api'
 import {PlaylistMachineContext} from './playlistMachine'
 
 type PlayerMachineEvents =
   | {type: 'LOADED'; videoRef: HTMLVideoElement}
-  | {type: 'SELECT'; url: string}
+  | {type: 'SELECT'; video: Video}
   | {type: 'RETRY'}
   | {type: 'PLAY'}
   | {type: 'PAUSE'}
@@ -20,7 +21,7 @@ type PlayerMachineEvents =
   | {type: 'RESUME'}
 
 type PlayerMachineContext = {
-  url: string
+  video: Video
   videoRef: HTMLVideoElement
   progress: number
   muted: boolean
@@ -29,9 +30,9 @@ type PlayerMachineContext = {
 
 const initialContext: Omit<
   PlayerMachineContext,
-  'muted' | 'url' | 'playbackRate'
+  'muted' | 'video' | 'playbackRate'
 > = {
-  videoRef: {} as any,
+  videoRef: {} as HTMLVideoElement,
   progress: 0,
 }
 
@@ -49,7 +50,7 @@ export const createPlayerMachine = (
       ...initialContext,
       muted: false,
       playbackRate: 1,
-      url: video.url,
+      video,
     },
     predictableActionArguments: true,
     preserveActionOrder: true,
@@ -144,7 +145,7 @@ export const createPlayerMachine = (
         actions: assign<PlayerMachineContext, any>((context, event) => {
           return {
             ...initialContext,
-            url: event.url,
+            video: event.video,
           }
         }),
       },

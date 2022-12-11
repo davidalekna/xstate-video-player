@@ -12,11 +12,11 @@ export const Playlist = () => {
           <div className="flex sticky top-0 w-full p-5 bg-gray-600 h-20">
             header
           </div>
-          <div className="flex flex-col gap-5 p-5">
+          <div className="flex flex-col gap-3 p-3">
             {videos.map((item, index) => (
               <button
                 key={index}
-                className="flex items-center p-3 gap-3 w-full h-18 bg-gray-700"
+                className="flex items-center p-2 gap-2 w-full h-18 bg-gray-700"
                 onClick={() =>
                   playlistService.send({type: 'SELECT', video: item})
                 }

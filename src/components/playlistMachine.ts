@@ -59,7 +59,7 @@ export const playlistMachine = createMachine({
           actions: assign<PlaylistMachineContext, any>((context, event) => {
             context.playerRef?.send({
               type: 'SELECT',
-              url: event.video.url,
+              video: event.video,
             })
 
             return {

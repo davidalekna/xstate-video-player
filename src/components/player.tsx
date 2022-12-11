@@ -3,6 +3,7 @@ import {useActor, useSelector} from '@xstate/react'
 import {usePlaylistContext} from './context'
 import {createPlayerMachine} from './playerMachine'
 import {ActorRefFrom} from 'xstate'
+import {Icon} from './icon'
 
 type VideoProps = {
   playerRef: ActorRefFrom<ReturnType<typeof createPlayerMachine>>
@@ -34,9 +35,9 @@ export const Video = ({playerRef}: VideoProps) => {
       <video
         ref={videoEl}
         className="w-full h-full"
-        src={state.context.url}
+        src={state.context.video.url}
         muted={state.context.muted}
-        // poster={state.context.poster}
+        poster={state.context.video.thumbnail}
         onWaiting={() => {
           send({type: 'BUFFERING'})
         }}
@@ -56,19 +57,8 @@ const Controls = ({playerRef}: VideoProps) => {
   const [state, send] = useActor(playerRef)
 
   return (
-    <div className="flex items-center absolute left-0 bottom-0 right-0 w-full border h-16 px-6 gap-5">
-      <div className="flex flex-none">
-        {state.matches('ready.playing') ? (
-          <button className="text-white" onClick={() => send('PAUSE')}>
-            pause
-          </button>
-        ) : (
-          <button className="text-white" onClick={() => send('PLAY')}>
-            play
-          </button>
-        )}
-      </div>
-      <div className="flex flex-auto">
+    <div className="flex flex-col items-center absolute left-0 bottom-0 right-0 w-full px-4">
+      <div className="flex flex-none w-full">
         <input
           type="range"
           min="0"
@@ -80,25 +70,44 @@ const Controls = ({playerRef}: VideoProps) => {
           }
         />
       </div>
-      <div>
-        <select
-          className="velocity"
-          value={state.context.playbackRate}
-          onChange={evt => {
-            send({
-              type: 'PLAYBACK_RATE',
-              playbackRate: Number(evt.target.value),
-            })
-          }}
-        >
-          <option value="0.50">0.50x</option>
-          <option value="1">1x</option>
-          <option value="1.25">1.25x</option>
-          <option value="2">2x</option>
-        </select>
-        <button className="text-white" onClick={() => send('MUTE')}>
-          {state.context.muted ? 'unmute' : 'mute'}
-        </button>
+      <div className="flex justify-between w-full py-2">
+        <div className="flex items-center flex-none gap-4">
+          <button className="text-white">
+            <Icon name="skip_previous" />
+          </button>
+          {state.matches('ready.playing') ? (
+            <button className="text-white" onClick={() => send('PAUSE')}>
+              <Icon name="pause" />
+            </button>
+          ) : (
+            <button className="text-white" onClick={() => send('PLAY')}>
+              <Icon name="play_arrow" />
+            </button>
+          )}
+          <button className="text-white">
+            <Icon name="skip_next" />
+          </button>
+          <button className="text-white" onClick={() => send('MUTE')}>
+            <Icon name={state.context.muted ? 'volume_up' : 'volume_off'} />
+          </button>
+        </div>
+        <div>
+          <select
+            className="velocity"
+            value={state.context.playbackRate}
+            onChange={evt => {
+              send({
+                type: 'PLAYBACK_RATE',
+                playbackRate: Number(evt.target.value),
+              })
+            }}
+          >
+            <option value="0.50">0.50x</option>
+            <option value="1">1x</option>
+            <option value="1.25">1.25x</option>
+            <option value="2">2x</option>
+          </select>
+        </div>
       </div>
     </div>
   )
