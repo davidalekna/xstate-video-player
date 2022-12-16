@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react'
+import React, {useEffect, useRef, useState} from 'react'
 import {useActor, useSelector} from '@xstate/react'
 import {usePlaylistContext} from './context'
 import {createPlayerMachine} from './playerMachine'
@@ -53,13 +53,59 @@ export const Video = ({playerRef}: VideoProps) => {
   )
 }
 
+const ControlsProgress = ({playerRef}: VideoProps) => {
+  const ref = useRef<HTMLDivElement>(null)
+  const [state, send] = useActor(playerRef)
+  const [pos, setPos] = useState(0)
+
+  useEffect(() => {
+    if (!ref.current) return
+    var rect = ref.current.getBoundingClientRect()
+    console.log(rect)
+    const handleWindowMouseMove = (evt: MouseEvent) => {
+      setPos(evt.clientX - rect.left)
+    }
+    ref.current.addEventListener('mousemove', handleWindowMouseMove)
+
+    return () => {
+      ref?.current?.removeEventListener('mousemove', handleWindowMouseMove)
+    }
+  }, [])
+
+  // send({type: 'PROGRESS', progress: Number(evt.target.value)})
+
+  return (
+    <div
+      ref={ref}
+      className="flex items-center relative w-full cursor-pointer h-6"
+      onMouseOut={() => setPos(0)}
+    >
+      <div className="relative w-full h-1.5 bg-gray-700">
+        <div className="bg-red-600 h-1.5" style={{width: `${pos}px`}} />
+        <div
+          className="h-1.5 bg-blue-500"
+          style={{width: `${state.context.progress ?? 0}%`}}
+        />
+      </div>
+      <div
+        style={{
+          left: `${state.context.progress ?? 0}%`,
+          width: 15,
+          height: 15,
+        }}
+        className="absolute rounded-full bg-blue-700"
+      />
+    </div>
+  )
+}
+
 const Controls = ({playerRef}: VideoProps) => {
   const [state, send] = useActor(playerRef)
 
   return (
-    <div className="flex flex-col items-center absolute left-0 bottom-0 right-0 w-full px-4">
+    <div className="flex flex-col items-center absolute left-0 bottom-0 right-0 w-full">
       <div className="flex flex-none w-full">
-        <input
+        {/* <input
           type="range"
           min="0"
           max="100"
@@ -68,9 +114,10 @@ const Controls = ({playerRef}: VideoProps) => {
           onChange={evt =>
             send({type: 'PROGRESS', progress: Number(evt.target.value)})
           }
-        />
+        /> */}
+        <ControlsProgress playerRef={playerRef} />
       </div>
-      <div className="flex justify-between w-full py-2">
+      <div className="flex items-center justify-between w-full py-2 px-4">
         <div className="flex items-center flex-none gap-4">
           <button className="text-white">
             <Icon name="skip_previous" />
@@ -91,9 +138,8 @@ const Controls = ({playerRef}: VideoProps) => {
             <Icon name={state.context.muted ? 'volume_off' : 'volume_up'} />
           </button>
         </div>
-        <div>
+        <div className="flex">
           <select
-            className="velocity"
             value={state.context.playbackRate}
             onChange={evt => {
               send({
