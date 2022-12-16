@@ -1,28 +1,30 @@
-import { ActorRefFrom, assign, createMachine, spawn } from "xstate";
-import { createPlayerMachine } from "./playerMachine";
+import {ActorRefFrom, assign, createMachine, spawn} from 'xstate'
+import {Video} from '../api'
+import {createPlayerMachine} from './playerMachine'
 
 type PlayerMachineEvents =
-  | { type: "LOADED" }
-  | { type: "PLAY" }
-  | { type: "AUTOPLAY" }
-  | { type: "LOOP" }
-  | { type: "SHUFFLE" }
-  | { type: "NEXT" }
-  | { type: "PREV" };
+  | {type: 'LOADED'}
+  | {type: 'SELECT'; video: Video}
+  | {type: 'AUTOPLAY'}
+  | {type: 'LOOP'}
+  | {type: 'SHUFFLE'}
+  | {type: 'NEXT'}
+  | {type: 'PREV'}
 
 export type PlaylistMachineContext = {
-  autoplay: boolean;
-  videos: any[];
-  playerRef: ActorRefFrom<ReturnType<typeof createPlayerMachine>> | null;
-  loop: boolean;
-  shuffle: boolean;
-  next: string;
-  prev: string;
-};
+  autoplay: boolean
+  videos: Video[]
+  playerRef: ActorRefFrom<ReturnType<typeof createPlayerMachine>> | null
+  loop: boolean
+  muted: boolean
+  playing: Video | null
+  shuffle: boolean
+  playbackRate: number
+}
 
 export const playlistMachine = createMachine({
-  id: "Playlist",
-  initial: "loading",
+  id: 'Playlist',
+  initial: 'loading',
   schema: {
     context: {} as PlaylistMachineContext,
     events: {} as PlayerMachineEvents,
@@ -30,39 +32,45 @@ export const playlistMachine = createMachine({
   context: {
     autoplay: false,
     videos: [],
+    playing: null,
+    muted: false,
     playerRef: null,
     loop: false,
     shuffle: false,
-    next: "null",
-    prev: "null",
+    playbackRate: 1,
   },
   predictableActionArguments: true,
   preserveActionOrder: true,
   states: {
     loading: {
-      entry: assign<PlaylistMachineContext>({
-        playerRef: (context) => {
-          return spawn(createPlayerMachine(context.videos[0]), {
-            name: "player",
-          });
-        },
+      entry: assign<PlaylistMachineContext>(context => {
+        const [video] = context.videos
+        return {
+          ...context,
+          playing: video,
+          playerRef: spawn(createPlayerMachine(video), 'player'),
+        }
       }),
-      always: "ready",
+      always: 'ready',
     },
     ready: {
       on: {
-        PLAY: {
-          actions: (context) => {
-            console.log("PLAY > SELECT", context.playerRef);
+        SELECT: {
+          actions: assign<PlaylistMachineContext, any>((context, event) => {
             context.playerRef?.send({
-              type: "SELECT",
-              url: context.videos[5].url,
-            });
-          },
+              type: 'SELECT',
+              video: event.video,
+            })
+
+            return {
+              ...context,
+              playing: event.video,
+            }
+          }),
         },
         AUTOPLAY: {},
         LOOP: {
-          actions: assign<any, any>({
+          actions: assign<PlaylistMachineContext, any>({
             loop: true,
           }),
         },
@@ -72,4 +80,4 @@ export const playlistMachine = createMachine({
       },
     },
   },
-});
+})

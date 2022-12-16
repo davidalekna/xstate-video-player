@@ -1,10 +1,5 @@
 import { useInterpret } from "@xstate/react";
-import React, {
-  createContext,
-  PropsWithChildren,
-  useContext,
-  useEffect,
-} from "react";
+import React, { createContext, PropsWithChildren, useContext } from "react";
 import { InterpreterFrom } from "xstate";
 import { playlistMachine } from "./playlistMachine";
 
@@ -25,12 +20,6 @@ export const PlaylistProvider = ({
   const playlistService = useInterpret(playlistMachine, {
     context: { videos },
   });
-
-  useEffect(() => {
-    playlistService.subscribe((state) => {
-      console.log(state);
-    });
-  }, [playlistService]);
 
   return (
     <PlaylistContext.Provider value={{ playlistService }}>
