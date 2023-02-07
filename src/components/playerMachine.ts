@@ -39,13 +39,9 @@ const initialContext: Omit<
 export const createPlayerMachine = (
   video: PlaylistMachineContext['videos'][0],
 ) => {
-  return createMachine({
+  return createMachine<PlayerMachineContext, PlayerMachineEvents>({
     id: 'player',
     initial: 'loading',
-    schema: {
-      context: {} as PlayerMachineContext,
-      events: {} as PlayerMachineEvents,
-    },
     context: {
       ...initialContext,
       muted: false,
@@ -59,7 +55,7 @@ export const createPlayerMachine = (
         on: {
           LOADED: {
             target: 'ready',
-            actions: assign<PlayerMachineContext, any>({
+            actions: assign({
               videoRef: (_context, event) => event.videoRef,
             }),
           },
@@ -92,7 +88,7 @@ export const createPlayerMachine = (
                 target: 'ended',
               },
               TRACK: {
-                actions: assign<PlayerMachineContext, any>({
+                actions: assign({
                   progress: (context, event) => {
                     const progress =
                       (context.videoRef.currentTime /
@@ -103,7 +99,7 @@ export const createPlayerMachine = (
                 }),
               },
               PROGRESS: {
-                actions: assign<PlayerMachineContext, any>({
+                actions: assign({
                   progress: ({videoRef}, event) => {
                     let manualChange = event.progress
                     let update = (videoRef.duration / 100) * manualChange
@@ -121,14 +117,14 @@ export const createPlayerMachine = (
         },
         on: {
           MUTE: {
-            actions: assign<PlayerMachineContext, any>({
+            actions: assign({
               muted: context => !context.muted,
             }),
           },
           SOUND: {},
           ERROR: 'error',
           PLAYBACK_RATE: {
-            actions: assign<PlayerMachineContext, any>({
+            actions: assign({
               playbackRate: ({videoRef}, event) => {
                 videoRef.playbackRate = event.playbackRate
                 return event.playbackRate
@@ -142,7 +138,7 @@ export const createPlayerMachine = (
     on: {
       SELECT: {
         target: 'loading',
-        actions: assign<PlayerMachineContext, any>((context, event) => {
+        actions: assign((context, event) => {
           return {
             ...initialContext,
             video: event.video,

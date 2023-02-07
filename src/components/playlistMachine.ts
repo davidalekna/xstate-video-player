@@ -22,13 +22,12 @@ export type PlaylistMachineContext = {
   playbackRate: number
 }
 
-export const playlistMachine = createMachine({
+export const playlistMachine = createMachine<
+  PlaylistMachineContext,
+  PlayerMachineEvents
+>({
   id: 'Playlist',
   initial: 'loading',
-  schema: {
-    context: {} as PlaylistMachineContext,
-    events: {} as PlayerMachineEvents,
-  },
   context: {
     autoplay: false,
     videos: [],
@@ -43,7 +42,7 @@ export const playlistMachine = createMachine({
   preserveActionOrder: true,
   states: {
     loading: {
-      entry: assign<PlaylistMachineContext>(context => {
+      entry: assign(context => {
         const [video] = context.videos
         return {
           ...context,
@@ -56,7 +55,7 @@ export const playlistMachine = createMachine({
     ready: {
       on: {
         SELECT: {
-          actions: assign<PlaylistMachineContext, any>((context, event) => {
+          actions: assign((context, event) => {
             context.playerRef?.send({
               type: 'SELECT',
               video: event.video,
@@ -70,8 +69,8 @@ export const playlistMachine = createMachine({
         },
         AUTOPLAY: {},
         LOOP: {
-          actions: assign<PlaylistMachineContext, any>({
-            loop: true,
+          actions: assign({
+            loop: ctx => true,
           }),
         },
         SHUFFLE: {},
