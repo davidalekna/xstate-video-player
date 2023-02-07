@@ -3,7 +3,7 @@ export type Video = {
   thumbnail: string
 }
 
-export const videos = [
+const videos = [
   {
     url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
     thumbnail:
@@ -56,3 +56,7 @@ export const videos = [
       'https://storage.googleapis.com/gtv-videos-bucket/sample/images/TearsOfSteel.jpg',
   },
 ]
+
+export const fetchVideos = (): Promise<Video[]> => {
+  return new Promise(res => setTimeout(() => res(videos), 500))
+}

@@ -4,6 +4,7 @@ import {usePlaylistContext} from './context'
 import {createPlayerMachine} from './playerMachine'
 import {ActorRefFrom} from 'xstate'
 import {Icon} from './icon'
+import {fromEvent, map} from 'rxjs'
 
 type VideoProps = {
   playerRef: ActorRefFrom<ReturnType<typeof createPlayerMachine>>
@@ -55,21 +56,16 @@ export const Video = ({playerRef}: VideoProps) => {
 
 const ControlsProgress = ({playerRef}: VideoProps) => {
   const ref = useRef<HTMLDivElement>(null)
-  const [state, send] = useActor(playerRef)
-  const [pos, setPos] = useState(0)
+  const [state] = useActor(playerRef)
+  const [position, setPosition] = useState(0)
 
   useEffect(() => {
     if (!ref.current) return
-    var rect = ref.current.getBoundingClientRect()
-    console.log(rect)
-    const handleWindowMouseMove = (evt: MouseEvent) => {
-      setPos(evt.clientX - rect.left)
-    }
-    ref.current.addEventListener('mousemove', handleWindowMouseMove)
-
-    return () => {
-      ref?.current?.removeEventListener('mousemove', handleWindowMouseMove)
-    }
+    const rect = ref.current.getBoundingClientRect()
+    const sub = fromEvent<MouseEvent>(ref.current, 'mousemove')
+      .pipe(map(event => event.clientX - rect.left))
+      .subscribe(setPosition)
+    return () => sub.unsubscribe()
   }, [])
 
   // send({type: 'PROGRESS', progress: Number(evt.target.value)})
@@ -78,10 +74,10 @@ const ControlsProgress = ({playerRef}: VideoProps) => {
     <div
       ref={ref}
       className="flex items-center relative w-full cursor-pointer h-6"
-      onMouseOut={() => setPos(0)}
+      onMouseOut={() => setPosition(0)}
     >
       <div className="relative w-full h-1.5 bg-gray-700">
-        <div className="bg-red-600 h-1.5" style={{width: `${pos}px`}} />
+        <div className="bg-red-600 h-1.5" style={{width: `${position}px`}} />
         <div
           className="h-1.5 bg-blue-500"
           style={{width: `${state.context.progress ?? 0}%`}}
