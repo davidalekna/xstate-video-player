@@ -4,7 +4,7 @@ import {usePlaylistContext} from './context'
 import {createPlayerMachine} from './playerMachine'
 import {ActorRefFrom} from 'xstate'
 import {Icon} from './icon'
-import {fromEvent, map} from 'rxjs'
+import {from, mergeMap, fromEvent, map, tap} from 'rxjs'
 
 type VideoProps = {
   playerRef: ActorRefFrom<ReturnType<typeof createPlayerMachine>>
@@ -58,17 +58,19 @@ const ControlsProgress = ({playerRef}: VideoProps) => {
   const ref = useRef<HTMLDivElement>(null)
   const [state, send] = useActor(playerRef)
   const [position, setPosition] = useState(0)
+  const [rect, setRect] = useState<DOMRect | null>(null)
 
   useEffect(() => {
     if (!ref.current) return
+    // FIX: use ResizeObserver to check and update if video size has changed.
     const rect = ref.current.getBoundingClientRect()
+    setRect(rect)
+
     const sub = fromEvent<MouseEvent>(ref.current, 'mousemove')
-      .pipe(map(event => event.clientX - rect.left))
+      .pipe(map(event => event.clientX - rect?.left!))
       .subscribe(setPosition)
     return () => sub.unsubscribe()
   }, [])
-
-  // send({type: 'PROGRESS', progress: Number(evt.target.value)})
 
   return (
     <div
@@ -77,23 +79,23 @@ const ControlsProgress = ({playerRef}: VideoProps) => {
       onMouseOut={() => setPosition(0)}
     >
       <div
-        className="relative w-full h-1.5 bg-gray-700"
-        onClick={() => send({type: 'PROGRESS', progress: position})}
+        className="relative w-full h-1.5 bg-gray-400"
+        onClick={() => {
+          send({type: 'TIME.UPDATE', playerW: rect?.width!, position})
+        }}
       >
-        <div className="bg-red-600 h-1.5" style={{width: `${position}px`}} />
+        <div className="bg-gray-500 h-1.5" style={{width: `${position}px`}} />
         <div
           className="h-1.5 bg-blue-500 absolute top-0 left-0"
           style={{width: `${state.context.progress ?? 0}%`}}
         />
       </div>
       <div
-        style={{
-          left: `${state.context.progress ?? 0}%`,
-          width: 15,
-          height: 15,
-        }}
-        className="absolute rounded-full bg-blue-700"
-      />
+        style={{left: `${state.context.progress ?? 0}%`}}
+        className="absolute w-[16px] h-[16px]"
+      >
+        <div className="absolute w-full h-full -left-[8px] rounded-full bg-blue-700" />
+      </div>
     </div>
   )
 }

@@ -1,6 +1,8 @@
 import {assign, createMachine} from 'xstate'
 import {Video} from '../api'
 import {PlaylistMachineContext} from './playlistMachine'
+import * as O from 'fp-ts/Option'
+import * as F from 'fp-ts/function'
 
 type PlayerMachineEvents =
   | {type: 'LOADED'; videoRef: HTMLVideoElement}
@@ -9,7 +11,7 @@ type PlayerMachineEvents =
   | {type: 'PLAY'}
   | {type: 'PAUSE'}
   | {type: 'END'}
-  | {type: 'PROGRESS'; progress: number}
+  | {type: 'TIME.UPDATE'; playerW: number; position: number}
   | {type: 'TRACK'}
   | {type: 'BUFFERING'}
   | {type: 'FORWARD'}
@@ -89,22 +91,15 @@ export const createPlayerMachine = (
               },
               TRACK: {
                 actions: assign({
-                  progress: (context, event) => {
-                    const progress =
-                      (context.videoRef.currentTime /
-                        context.videoRef.duration) *
-                      100
-                    return progress
-                  },
-                }),
-              },
-              PROGRESS: {
-                actions: assign({
-                  progress: ({videoRef}, event) => {
-                    let manualChange = event.progress
-                    let update = (videoRef.duration / 100) * manualChange
-                    videoRef.currentTime = update
-                    return manualChange
+                  progress: context => {
+                    return F.pipe(
+                      O.fromNullable(context.videoRef),
+                      O.map(x => (x.currentTime / x.duration) * 100),
+                      O.fold(
+                        () => 0,
+                        x => x,
+                      ),
+                    )
                   },
                 }),
               },
@@ -122,6 +117,26 @@ export const createPlayerMachine = (
             }),
           },
           SOUND: {},
+          'TIME.UPDATE': {
+            actions: assign({
+              progress: (context, event) => {
+                return F.pipe(
+                  O.fromNullable(context.videoRef),
+                  O.map(ref => (ref.duration / event.playerW) * event.position),
+                  O.map(time => {
+                    // mutate videoRef current time
+                    context.videoRef.currentTime = time
+                    return time
+                  }),
+                  O.map(time => (time / context.videoRef.duration) * 100),
+                  O.fold(
+                    () => 0,
+                    progress => progress,
+                  ),
+                )
+              },
+            }),
+          },
           ERROR: 'error',
           PLAYBACK_RATE: {
             actions: assign({
