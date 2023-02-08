@@ -56,7 +56,7 @@ export const Video = ({playerRef}: VideoProps) => {
 
 const ControlsProgress = ({playerRef}: VideoProps) => {
   const ref = useRef<HTMLDivElement>(null)
-  const [state] = useActor(playerRef)
+  const [state, send] = useActor(playerRef)
   const [position, setPosition] = useState(0)
 
   useEffect(() => {
@@ -76,10 +76,13 @@ const ControlsProgress = ({playerRef}: VideoProps) => {
       className="flex items-center relative w-full cursor-pointer h-6"
       onMouseOut={() => setPosition(0)}
     >
-      <div className="relative w-full h-1.5 bg-gray-700">
+      <div
+        className="relative w-full h-1.5 bg-gray-700"
+        onClick={() => send({type: 'PROGRESS', progress: position})}
+      >
         <div className="bg-red-600 h-1.5" style={{width: `${position}px`}} />
         <div
-          className="h-1.5 bg-blue-500"
+          className="h-1.5 bg-blue-500 absolute top-0 left-0"
           style={{width: `${state.context.progress ?? 0}%`}}
         />
       </div>
@@ -101,16 +104,6 @@ const Controls = ({playerRef}: VideoProps) => {
   return (
     <div className="flex flex-col items-center absolute left-0 bottom-0 right-0 w-full">
       <div className="flex flex-none w-full">
-        {/* <input
-          type="range"
-          min="0"
-          max="100"
-          className="w-full"
-          value={state.context.progress}
-          onChange={evt =>
-            send({type: 'PROGRESS', progress: Number(evt.target.value)})
-          }
-        /> */}
         <ControlsProgress playerRef={playerRef} />
       </div>
       <div className="flex items-center justify-between w-full py-2 px-4">

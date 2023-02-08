@@ -21,7 +21,7 @@ function App() {
         toolbar
       </nav>
       <div className="flex w-full justify-center bg-gray-900">
-        <div className="flex w-full max-w-[1600px] p-10">
+        <div className="flex w-full max-w-[1920px] p-5">
           {loading ? (
             <div>Loading...</div>
           ) : (
