@@ -1,6 +1,8 @@
 import {assign, createMachine} from 'xstate'
 import {Video} from '../api'
 import {PlaylistMachineContext} from './playlistMachine'
+import * as O from 'fp-ts/Option'
+import * as F from 'fp-ts/function'
 
 type PlayerMachineEvents =
   | {type: 'LOADED'; videoRef: HTMLVideoElement}
@@ -9,7 +11,7 @@ type PlayerMachineEvents =
   | {type: 'PLAY'}
   | {type: 'PAUSE'}
   | {type: 'END'}
-  | {type: 'PROGRESS'; progress: number}
+  | {type: 'TIME.UPDATE'; playerW: number; position: number}
   | {type: 'TRACK'}
   | {type: 'BUFFERING'}
   | {type: 'FORWARD'}
@@ -39,13 +41,9 @@ const initialContext: Omit<
 export const createPlayerMachine = (
   video: PlaylistMachineContext['videos'][0],
 ) => {
-  return createMachine({
+  return createMachine<PlayerMachineContext, PlayerMachineEvents>({
     id: 'player',
     initial: 'loading',
-    schema: {
-      context: {} as PlayerMachineContext,
-      events: {} as PlayerMachineEvents,
-    },
     context: {
       ...initialContext,
       muted: false,
@@ -59,7 +57,7 @@ export const createPlayerMachine = (
         on: {
           LOADED: {
             target: 'ready',
-            actions: assign<PlayerMachineContext, any>({
+            actions: assign({
               videoRef: (_context, event) => event.videoRef,
             }),
           },
@@ -92,23 +90,16 @@ export const createPlayerMachine = (
                 target: 'ended',
               },
               TRACK: {
-                actions: assign<PlayerMachineContext, any>({
-                  progress: (context, event) => {
-                    const progress =
-                      (context.videoRef.currentTime /
-                        context.videoRef.duration) *
-                      100
-                    return progress
-                  },
-                }),
-              },
-              PROGRESS: {
-                actions: assign<PlayerMachineContext, any>({
-                  progress: ({videoRef}, event) => {
-                    let manualChange = event.progress
-                    let update = (videoRef.duration / 100) * manualChange
-                    videoRef.currentTime = update
-                    return manualChange
+                actions: assign({
+                  progress: context => {
+                    return F.pipe(
+                      O.fromNullable(context.videoRef),
+                      O.map(x => (x.currentTime / x.duration) * 100),
+                      O.fold(
+                        () => 0,
+                        x => x,
+                      ),
+                    )
                   },
                 }),
               },
@@ -121,14 +112,34 @@ export const createPlayerMachine = (
         },
         on: {
           MUTE: {
-            actions: assign<PlayerMachineContext, any>({
+            actions: assign({
               muted: context => !context.muted,
             }),
           },
           SOUND: {},
+          'TIME.UPDATE': {
+            actions: assign({
+              progress: (context, event) => {
+                return F.pipe(
+                  O.fromNullable(context.videoRef),
+                  O.map(ref => (ref.duration / event.playerW) * event.position),
+                  O.map(time => {
+                    // mutate videoRef current time
+                    context.videoRef.currentTime = time
+                    return time
+                  }),
+                  O.map(time => (time / context.videoRef.duration) * 100),
+                  O.fold(
+                    () => 0,
+                    progress => progress,
+                  ),
+                )
+              },
+            }),
+          },
           ERROR: 'error',
           PLAYBACK_RATE: {
-            actions: assign<PlayerMachineContext, any>({
+            actions: assign({
               playbackRate: ({videoRef}, event) => {
                 videoRef.playbackRate = event.playbackRate
                 return event.playbackRate
@@ -142,7 +153,7 @@ export const createPlayerMachine = (
     on: {
       SELECT: {
         target: 'loading',
-        actions: assign<PlayerMachineContext, any>((context, event) => {
+        actions: assign((context, event) => {
           return {
             ...initialContext,
             video: event.video,
