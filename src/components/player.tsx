@@ -4,7 +4,8 @@ import {usePlaylistContext} from './context'
 import {createPlayerMachine} from './playerMachine'
 import {ActorRefFrom} from 'xstate'
 import {Icon} from './icon'
-import {from, mergeMap, fromEvent, map, tap} from 'rxjs'
+import {fromEvent, map, tap} from 'rxjs'
+import {fromResizeEvent} from '../utils'
 
 type VideoProps = {
   playerRef: ActorRefFrom<ReturnType<typeof createPlayerMachine>>
@@ -58,19 +59,24 @@ const ControlsProgress = ({playerRef}: VideoProps) => {
   const ref = useRef<HTMLDivElement>(null)
   const [state, send] = useActor(playerRef)
   const [position, setPosition] = useState(0)
-  const [rect, setRect] = useState<DOMRect | null>(null)
+  const [rect, setRect] = useState<ResizeObserverSize>({
+    blockSize: 0,
+    inlineSize: 0,
+  })
 
   useEffect(() => {
     if (!ref.current) return
-    // FIX: use ResizeObserver to check and update if video size has changed.
-    const rect = ref.current.getBoundingClientRect()
-    setRect(rect)
-
-    const sub = fromEvent<MouseEvent>(ref.current, 'mousemove')
-      .pipe(map(event => event.clientX - rect?.left!))
-      .subscribe(setPosition)
+    let sub = fromResizeEvent(ref.current).subscribe(setRect)
     return () => sub.unsubscribe()
   }, [])
+
+  useEffect(() => {
+    if (!ref.current) return
+    let sub = fromEvent<MouseEvent>(ref.current, 'mousemove')
+      .pipe(map(event => event.clientX - rect.blockSize))
+      .subscribe(setPosition)
+    return () => sub.unsubscribe()
+  }, [rect.blockSize])
 
   return (
     <div
@@ -81,7 +87,7 @@ const ControlsProgress = ({playerRef}: VideoProps) => {
       <div
         className="relative w-full h-1.5 bg-gray-400"
         onClick={() => {
-          send({type: 'TIME.UPDATE', playerW: rect?.width!, position})
+          send({type: 'TIME.UPDATE', playerW: rect.inlineSize, position})
         }}
       >
         <div className="bg-gray-500 h-1.5" style={{width: `${position}px`}} />
@@ -156,13 +162,12 @@ export const Player = () => {
     playlistService,
     state => state.context.playerRef,
   )
-  const playing = useSelector(playlistService, state => state.context.playing)
   const [state] = useActor(playerRef!)
 
   return (
     <div className="relative w-full">
       <div className="aspect-w-16 w-full aspect-h-9 flex bg-black overflow-hidden">
-        <Video key={playing?.url} playerRef={playerRef!} />
+        <Video key={state.context.video?.url} playerRef={playerRef!} />
       </div>
       {!state.matches('error') && <Controls playerRef={playerRef!} />}
     </div>
