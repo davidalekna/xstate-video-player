@@ -63,12 +63,6 @@ export const createPlayerMachine = (
           },
         },
       },
-      buffering: {
-        id: 'buffering',
-        on: {
-          RESUME: 'ready.playing',
-        },
-      },
       ready: {
         initial: 'paused',
         states: {
@@ -103,9 +97,14 @@ export const createPlayerMachine = (
                   },
                 }),
               },
-              BUFFERING: '#buffering',
+              BUFFERING: 'buffering',
               FORWARD: {},
               BACKWARD: {},
+            },
+          },
+          buffering: {
+            on: {
+              RESUME: 'playing',
             },
           },
           ended: {},

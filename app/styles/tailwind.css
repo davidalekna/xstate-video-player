@@ -595,6 +595,10 @@ body {
   z-index: 10;
 }
 
+.z-20 {
+  z-index: 20;
+}
+
 .flex {
   display: flex;
 }
@@ -762,9 +766,8 @@ body {
   padding-right: 1.25rem;
 }
 
-.py-2 {
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
+.pb-3 {
+  padding-bottom: 0.75rem;
 }
 
 .text-left {

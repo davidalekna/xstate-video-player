@@ -58,5 +58,5 @@ const videos = [
 ]
 
 export const fetchVideos = (): Promise<Video[]> => {
-  return new Promise(res => setTimeout(() => res(videos), 500))
+  return new Promise(res => setTimeout(() => res(videos), 10))
 }
