@@ -115,24 +115,24 @@ const Controls = ({playerRef}: VideoProps) => {
         <ControlsProgress playerRef={playerRef} />
       </div>
       <div className="flex items-center justify-between w-full py-2 px-4">
-        <div className="flex items-center flex-none gap-4">
+        <div className="flex items-center flex-none gap-4 ">
           <button className="text-white">
-            <Icon name="skip_previous" />
+            <Icon id="skip_previous" />
           </button>
           {state.matches('ready.playing') ? (
             <button className="text-white" onClick={() => send('PAUSE')}>
-              <Icon name="pause" />
+              <Icon id="pause" />
             </button>
           ) : (
             <button className="text-white" onClick={() => send('PLAY')}>
-              <Icon name="play_arrow" />
+              <Icon id="play_arrow" />
             </button>
           )}
           <button className="text-white">
-            <Icon name="skip_next" />
+            <Icon id="skip_next" />
           </button>
           <button className="text-white" onClick={() => send('MUTE')}>
-            <Icon name={state.context.muted ? 'volume_off' : 'volume_up'} />
+            <Icon id={state.context.muted ? 'volume_off' : 'volume_up'} />
           </button>
         </div>
         <div className="flex">
