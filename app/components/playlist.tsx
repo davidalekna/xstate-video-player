@@ -7,7 +7,7 @@ export const Playlist = () => {
   const context = useSelector(playlistService, ({context}) => context)
 
   return (
-    <div className="flex flex-none basis-1/4">
+    <div className="hidden lg:flex flex-none basis-2/6 xl:basis-1/4">
       <div className="aspect-w-8 aspect-h-9 w-full bg-gray-800">
         <div className=" flex flex-col w-full overflow-y-auto">
           <div className="flex sticky top-0 w-full p-5 bg-gray-600 h-20 z-10">

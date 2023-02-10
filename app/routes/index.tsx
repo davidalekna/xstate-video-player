@@ -16,7 +16,7 @@ export default function Index() {
 
   return (
     <main>
-      <nav className="w-full h-16 px-5 flex flex-none justify-between items-center">
+      <nav className="w-full h-14 px-5 flex flex-none justify-between items-center">
         toolbar
       </nav>
       <div className="flex w-full justify-center bg-gray-900">
