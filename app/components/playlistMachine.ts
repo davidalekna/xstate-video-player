@@ -16,6 +16,7 @@ export type PlaylistMachineContext = {
   videos: Video[]
   playerRef: ActorRefFrom<ReturnType<typeof createPlayerMachine>> | null
   loop: boolean
+  title: string
   muted: boolean
   playing: Video | null
   shuffle: boolean
@@ -34,6 +35,7 @@ export const playlistMachine = createMachine<
       videos: [],
       playing: null,
       muted: false,
+      title: '',
       playerRef: null,
       loop: false,
       shuffle: false,
