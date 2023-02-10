@@ -13,17 +13,19 @@ const PlaylistContext = createContext<PlaylistProviderState>({
 })
 
 type PlaylistProviderProps = PropsWithChildren<{
+  title?: string
   videos: Video[]
   playing?: Video
 }>
 export const PlaylistProvider = ({
   children,
+  title,
   videos,
   playing,
 }: PlaylistProviderProps) => {
   let [searchParams, setSearchParams] = useSearchParams()
   let playlistService = useInterpret(playlistMachine, {
-    context: {videos, playing},
+    context: {videos, playing, title},
     actions: {
       syncSearchParams: context => {
         let prev = Object.fromEntries(searchParams.entries())

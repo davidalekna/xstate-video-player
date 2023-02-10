@@ -6,12 +6,14 @@ export type Video = {
 
 export type PlaylistTable = {
   id: string
+  title: string
   videos: Video[]
 }
 
 const playlistsDb: PlaylistTable[] = [
   {
     id: '2b0d7b3dcb6d',
+    title: 'Random short clips from google',
     videos: [
       {
         id: '5d42bf2f-63b5-443b-ac95-2450d56ae4aa',

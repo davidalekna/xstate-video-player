@@ -22,12 +22,13 @@ export default function Index() {
 
   return (
     <main>
-      <nav className="w-full h-14 px-5 flex flex-none justify-between items-center">
-        toolbar
+      <nav className="w-full h-14 px-5 flex flex-none justify-between items-center bg-zinc-800">
+        <p className="text-zinc-100 font-semibold text-lg">Brand</p>
       </nav>
-      <div className="flex w-full justify-center bg-gray-900">
+      <div className="flex w-full justify-center">
         <div className="flex w-full max-w-[1920px] p-5">
           <PlaylistProvider
+            title={playlist.title}
             videos={playlist?.videos ?? []}
             playing={playlist.playing}
           >
