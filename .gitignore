@@ -1,6 +1,6 @@
 node_modules
 
-/app/styles/*/**.css
+/app/styles/**/*.css
 /.cache
 /build
 /public/build
