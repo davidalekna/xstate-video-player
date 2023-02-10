@@ -12,4 +12,4 @@ npm run dev
 
 Preview:
 
-![alt text](https://github.com/davidalekna/xstate-video-player/blob/update-colors/preview.jpg)
+![alt text](https://github.com/davidalekna/xstate-video-player/blob/main/preview.jpg)
