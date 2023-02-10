@@ -1,10 +1,23 @@
+import clsx from 'clsx'
 import {useSelector} from '@xstate/react'
 import {usePlaylistContext} from './context'
-import clsx from 'clsx'
+import {Link, useSearchParams} from '@remix-run/react'
+import {useEffect} from 'react'
 
 export const Playlist = () => {
-  const {playlistService} = usePlaylistContext()
-  const context = useSelector(playlistService, ({context}) => context)
+  let [searchParams] = useSearchParams()
+  let {playlistService} = usePlaylistContext()
+  let context = useSelector(playlistService, ({context}) => context)
+  let activeListId = searchParams.get('list')
+  let activeVideoId = searchParams.get('v')
+
+  // update active video on browser history navigation
+  useEffect(() => {
+    let optionalVideo = context.videos.find(video => video.id === activeVideoId)
+    if (!optionalVideo) return
+    if (optionalVideo.id === context.playing?.id) return
+    playlistService.send({type: 'SELECT', video: optionalVideo})
+  }, [activeVideoId])
 
   return (
     <div className="hidden lg:flex flex-none basis-2/6 xl:basis-1/4">
@@ -15,7 +28,7 @@ export const Playlist = () => {
           </div>
           <div className="flex flex-col">
             {context.videos.map((item, index) => {
-              let isActive = item.url === context.playing?.url
+              let isActive = item.id === context.playing?.id
               let title = item.thumbnail
                 .split('/')
                 .at(-1)
@@ -24,16 +37,13 @@ export const Playlist = () => {
                 .join(' ')
 
               return (
-                <button
+                <Link
                   key={index}
                   className={clsx(
                     'hover:bg-gray-700',
                     isActive ? 'bg-gray-900' : '',
                   )}
-                  onClick={() => {
-                    console.log('clicked')
-                    playlistService.send({type: 'SELECT', video: item})
-                  }}
+                  to={`?list=${activeListId}&v=${item.id}`}
                 >
                   <div className="flex p-2 gap-2 w-full h-18 overflow-hidden">
                     <div className="flex flex-none basis-1/3">
@@ -49,7 +59,7 @@ export const Playlist = () => {
                       <p className="text-left">{title}</p>
                     </div>
                   </div>
-                </button>
+                </Link>
               )
             })}
           </div>

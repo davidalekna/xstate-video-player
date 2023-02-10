@@ -25,58 +25,69 @@ export type PlaylistMachineContext = {
 export const playlistMachine = createMachine<
   PlaylistMachineContext,
   PlayerMachineEvents
->({
-  id: 'Playlist',
-  initial: 'loading',
-  context: {
-    autoplay: false,
-    videos: [],
-    playing: null,
-    muted: false,
-    playerRef: null,
-    loop: false,
-    shuffle: false,
-    playbackRate: 1,
-  },
-  predictableActionArguments: true,
-  preserveActionOrder: true,
-  states: {
-    loading: {
-      entry: assign(context => {
-        const [video] = context.videos
-        return {
-          ...context,
-          playing: video,
-          playerRef: spawn(createPlayerMachine(video), 'player'),
-        }
-      }),
-      always: 'ready',
+>(
+  {
+    id: 'Playlist',
+    initial: 'loading',
+    context: {
+      autoplay: false,
+      videos: [],
+      playing: null,
+      muted: false,
+      playerRef: null,
+      loop: false,
+      shuffle: false,
+      playbackRate: 1,
     },
-    ready: {
-      on: {
-        SELECT: {
-          actions: assign((context, event) => {
-            context.playerRef?.send({
-              type: 'SELECT',
-              video: event.video,
-            })
-
+    predictableActionArguments: true,
+    preserveActionOrder: true,
+    states: {
+      loading: {
+        entry: [
+          assign(context => {
+            // allow to load with a specific video or default to first
+            let video = context.playing ?? context.videos[0]
             return {
               ...context,
-              playing: event.video,
+              playing: video,
+              playerRef: spawn(createPlayerMachine(video), 'player'),
             }
           }),
+          'syncSearchParams',
+        ],
+        always: 'ready',
+      },
+      ready: {
+        on: {
+          SELECT: {
+            actions: assign((context, event) => {
+              context.playerRef?.send({
+                type: 'SELECT',
+                video: event.video,
+              })
+
+              return {
+                ...context,
+                playing: event.video,
+              }
+            }),
+          },
+          AUTOPLAY: {},
+          LOOP: {
+            actions: assign({
+              loop: ctx => true,
+            }),
+          },
+          SHUFFLE: {},
+          NEXT: {},
+          PREV: {},
         },
-        AUTOPLAY: {},
-        LOOP: {
-          actions: assign({
-            loop: ctx => true,
-          }),
-        },
-        SHUFFLE: {},
-        NEXT: {},
-        PREV: {},
       },
     },
   },
-})
+  {
+    actions: {
+      syncSearchParams: () => {},
+    },
+  },
+)

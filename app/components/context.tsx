@@ -1,3 +1,4 @@
+import {useSearchParams} from '@remix-run/react'
 import {useInterpret} from '@xstate/react'
 import {createContext, PropsWithChildren, useContext} from 'react'
 import {InterpreterFrom} from 'xstate'
@@ -13,10 +14,22 @@ const PlaylistContext = createContext<PlaylistProviderState>({
 
 type PlaylistProviderProps = PropsWithChildren<{
   videos: Video[]
+  playing?: Video
 }>
-export const PlaylistProvider = ({children, videos}: PlaylistProviderProps) => {
-  const playlistService = useInterpret(playlistMachine, {
-    context: {videos},
+export const PlaylistProvider = ({
+  children,
+  videos,
+  playing,
+}: PlaylistProviderProps) => {
+  let [searchParams, setSearchParams] = useSearchParams()
+  let playlistService = useInterpret(playlistMachine, {
+    context: {videos, playing},
+    actions: {
+      syncSearchParams: context => {
+        let prev = Object.fromEntries(searchParams.entries())
+        setSearchParams({...prev, v: context.playing?.id!})
+      },
+    },
   })
 
   return (

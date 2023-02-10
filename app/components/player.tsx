@@ -6,6 +6,7 @@ import {ActorRefFrom} from 'xstate'
 import {Icon} from './icon'
 import {fromEvent, map} from 'rxjs'
 import {fromResizeEvent} from '../utils'
+import {useSearchParams} from '@remix-run/react'
 
 type VideoProps = {
   playerRef: ActorRefFrom<ReturnType<typeof createPlayerMachine>>
@@ -37,9 +38,9 @@ export const Video = ({playerRef}: VideoProps) => {
       <video
         ref={videoEl}
         className="w-full h-full"
-        src={state.context.video.url}
+        src={state.context.video?.url}
         muted={state.context.muted}
-        poster={state.context.video.thumbnail}
+        poster={state.context.video?.thumbnail}
         onWaiting={() => {
           send({type: 'BUFFERING'})
         }}
