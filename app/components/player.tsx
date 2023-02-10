@@ -4,8 +4,9 @@ import {usePlaylistContext} from './context'
 import {createPlayerMachine} from './playerMachine'
 import {ActorRefFrom} from 'xstate'
 import {Icon} from './icon'
-import {fromEvent, map, tap} from 'rxjs'
+import {fromEvent, map} from 'rxjs'
 import {fromResizeEvent} from '../utils'
+import {useSearchParams} from '@remix-run/react'
 
 type VideoProps = {
   playerRef: ActorRefFrom<ReturnType<typeof createPlayerMachine>>
@@ -29,7 +30,7 @@ export const Video = ({playerRef}: VideoProps) => {
 
   return (
     <>
-      {state.matches('buffering') && (
+      {state.matches('ready.buffering') && (
         <div className="absolute flex items-center justify-center top-0 right-0 bottom-0 left-0 z-10">
           Buffering
         </div>
@@ -37,9 +38,9 @@ export const Video = ({playerRef}: VideoProps) => {
       <video
         ref={videoEl}
         className="w-full h-full"
-        src={state.context.video.url}
+        src={state.context.video?.url}
         muted={state.context.muted}
-        poster={state.context.video.thumbnail}
+        poster={state.context.video?.thumbnail}
         onWaiting={() => {
           send({type: 'BUFFERING'})
         }}
@@ -85,14 +86,14 @@ const ControlsProgress = ({playerRef}: VideoProps) => {
       onMouseOut={() => setPosition(0)}
     >
       <div
-        className="relative w-full h-1.5 bg-gray-400"
+        className="relative w-full h-1 bg-gray-400"
         onClick={() => {
           send({type: 'TIME.UPDATE', playerW: rect.inlineSize, position})
         }}
       >
-        <div className="bg-gray-500 h-1.5" style={{width: `${position}px`}} />
+        <div className="bg-gray-500 h-1" style={{width: `${position}px`}} />
         <div
-          className="h-1.5 bg-blue-500 absolute top-0 left-0"
+          className="h-1 bg-blue-500 absolute top-0 left-0"
           style={{width: `${state.context.progress ?? 0}%`}}
         />
       </div>
@@ -110,28 +111,28 @@ const Controls = ({playerRef}: VideoProps) => {
   const [state, send] = useActor(playerRef)
 
   return (
-    <div className="flex flex-col items-center absolute left-0 bottom-0 right-0 w-full">
+    <div className="flex flex-col items-center absolute left-0 bottom-0 right-0 w-full z-20">
       <div className="flex flex-none w-full">
         <ControlsProgress playerRef={playerRef} />
       </div>
-      <div className="flex items-center justify-between w-full py-2 px-4">
-        <div className="flex items-center flex-none gap-4 ">
-          <button className="text-white">
+      <div className="flex items-center justify-between w-full pb-3 px-4">
+        <div className="flex items-center flex-none gap-4 text-white">
+          <button type="button">
             <Icon id="skip_previous" />
           </button>
-          {state.matches('ready.playing') ? (
-            <button className="text-white" onClick={() => send('PAUSE')}>
+          {['ready.playing', 'ready.buffering'].some(state.matches) ? (
+            <button type="button" onClick={() => send('PAUSE')}>
               <Icon id="pause" />
             </button>
           ) : (
-            <button className="text-white" onClick={() => send('PLAY')}>
+            <button type="button" onClick={() => send('PLAY')}>
               <Icon id="play_arrow" />
             </button>
           )}
-          <button className="text-white">
+          <button type="button">
             <Icon id="skip_next" />
           </button>
-          <button className="text-white" onClick={() => send('MUTE')}>
+          <button type="button" onClick={() => send('MUTE')}>
             <Icon id={state.context.muted ? 'volume_off' : 'volume_up'} />
           </button>
         </div>
