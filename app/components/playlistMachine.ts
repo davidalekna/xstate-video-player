@@ -1,3 +1,6 @@
+import * as O from 'fp-ts/Option'
+import * as F from 'fp-ts/function'
+import * as A from 'fp-ts/Array'
 import {ActorRefFrom, assign, createMachine, spawn} from 'xstate'
 import {Video} from '../api'
 import {createPlayerMachine} from './playerMachine'
@@ -64,7 +67,7 @@ export const playlistMachine = createMachine<
           SELECT: {
             actions: assign((context, event) => {
               context.playerRef?.send({
-                type: 'SELECT',
+                type: 'CHANGE',
                 video: event.video,
               })
 
@@ -81,8 +84,12 @@ export const playlistMachine = createMachine<
             }),
           },
           SHUFFLE: {},
-          NEXT: {},
-          PREV: {},
+          PREV: {
+            actions: ['switchVideo', 'syncSearchParams'],
+          },
+          NEXT: {
+            actions: ['switchVideo', 'syncSearchParams'],
+          },
         },
       },
     },
@@ -90,6 +97,37 @@ export const playlistMachine = createMachine<
   {
     actions: {
       syncSearchParams: () => {},
+      switchVideo: assign((context, event) => {
+        // TODO: take care if loop is on
+        return F.pipe(
+          O.fromNullable(context.videos),
+          O.chain(videos =>
+            F.pipe(
+              videos,
+              A.findIndex(video => video.id === context.playing?.id),
+              O.map(index => {
+                let selector = event.type === 'NEXT' ? index + 1 : index - 1
+                return videos[selector]
+              }),
+              O.chain(video => (video ? O.some(video) : O.none)),
+            ),
+          ),
+          O.fold(
+            () => context,
+            video => {
+              context.playerRef?.send({
+                type: 'CHANGE',
+                video: video,
+              })
+
+              return {
+                ...context,
+                playing: video,
+              }
+            },
+          ),
+        )
+      }),
     },
   },
 )
