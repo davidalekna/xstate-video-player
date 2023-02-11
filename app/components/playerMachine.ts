@@ -1,4 +1,4 @@
-import {assign, createMachine} from 'xstate'
+import {assign, createMachine, sendParent} from 'xstate'
 import {Video} from '../api'
 import {PlaylistMachineContext} from './playlistMachine'
 import * as O from 'fp-ts/Option'
@@ -6,12 +6,15 @@ import * as F from 'fp-ts/function'
 
 type PlayerMachineEvents =
   | {type: 'LOADED'; videoRef: HTMLVideoElement}
-  | {type: 'SELECT'; video: Video}
-  | {type: 'RETRY'}
+  | {type: 'CHANGE'; video: Video}
   | {type: 'PLAY'}
   | {type: 'PAUSE'}
+  | {type: 'RESUME'}
+  | {type: 'NEXT'}
+  | {type: 'PREV'}
   | {type: 'END'}
-  | {type: 'TIME.UPDATE'; playerW: number; position: number}
+  | {type: 'RETRY'}
+  | {type: 'TIME.UPDATE'; inlineSize: number; position: number}
   | {type: 'TRACK'}
   | {type: 'BUFFERING'}
   | {type: 'FORWARD'}
@@ -20,7 +23,6 @@ type PlayerMachineEvents =
   | {type: 'SOUND'}
   | {type: 'MUTE'}
   | {type: 'PLAYBACK_RATE'; playbackRate: number}
-  | {type: 'RESUME'}
 
 type PlayerMachineContext = {
   video: Video
@@ -121,7 +123,9 @@ export const createPlayerMachine = (
               progress: (context, event) => {
                 return F.pipe(
                   O.fromNullable(context.videoRef),
-                  O.map(ref => (ref.duration / event.playerW) * event.position),
+                  O.map(
+                    ref => (ref.duration / event.inlineSize) * event.position,
+                  ),
                   O.map(time => {
                     // mutate videoRef current time
                     context.videoRef.currentTime = time
@@ -136,7 +140,6 @@ export const createPlayerMachine = (
               },
             }),
           },
-          ERROR: 'error',
           PLAYBACK_RATE: {
             actions: assign({
               playbackRate: ({videoRef}, event) => {
@@ -145,12 +148,19 @@ export const createPlayerMachine = (
               },
             }),
           },
+          PREV: {
+            actions: sendParent('PREV'),
+          },
+          NEXT: {
+            actions: sendParent('NEXT'),
+          },
+          ERROR: 'error',
         },
       },
       error: {},
     },
     on: {
-      SELECT: {
+      CHANGE: {
         target: 'loading',
         actions: assign((context, event) => {
           return {

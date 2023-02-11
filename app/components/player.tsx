@@ -20,16 +20,8 @@ export const Video = ({playerRef}: VideoProps) => {
     send({type: 'LOADED', videoRef: videoEl.current})
   }, [videoEl, send])
 
-  if (state.matches('error')) {
-    return (
-      <div className="border text-white w-full h-full flex items-center justify-center">
-        Broken URL!
-      </div>
-    )
-  }
-
   return (
-    <>
+    <div className="aspect-w-16 w-full aspect-h-9 flex bg-black overflow-hidden">
       {state.matches('ready.buffering') && (
         <div className="absolute flex items-center justify-center top-0 right-0 bottom-0 left-0 z-10">
           Buffering
@@ -52,7 +44,7 @@ export const Video = ({playerRef}: VideoProps) => {
         }}
         onTimeUpdate={() => send('TRACK')}
       />
-    </>
+    </div>
   )
 }
 
@@ -60,37 +52,35 @@ const ControlsProgress = ({playerRef}: VideoProps) => {
   const ref = useRef<HTMLDivElement>(null)
   const [state, send] = useActor(playerRef)
   const [position, setPosition] = useState(0)
-  const [rect, setRect] = useState<ResizeObserverSize>({
+  const [size, setSize] = useState<ResizeObserverSize>({
     blockSize: 0,
     inlineSize: 0,
   })
 
   useEffect(() => {
     if (!ref.current) return
-    let sub = fromResizeEvent(ref.current).subscribe(setRect)
+    let sub = fromResizeEvent(ref.current).subscribe(setSize)
     return () => sub.unsubscribe()
   }, [])
 
   useEffect(() => {
     if (!ref.current) return
     let sub = fromEvent<MouseEvent>(ref.current, 'mousemove')
-      .pipe(map(event => event.clientX - rect.blockSize))
+      .pipe(map(event => event.clientX - size.blockSize))
       .subscribe(setPosition)
     return () => sub.unsubscribe()
-  }, [rect.blockSize])
+  }, [size.blockSize])
 
   return (
     <div
       ref={ref}
       className="flex items-center relative w-full cursor-pointer h-6"
       onMouseOut={() => setPosition(0)}
+      onClick={() => {
+        send({type: 'TIME.UPDATE', inlineSize: size.inlineSize, position})
+      }}
     >
-      <div
-        className="relative w-full h-1 bg-gray-400"
-        onClick={() => {
-          send({type: 'TIME.UPDATE', playerW: rect.inlineSize, position})
-        }}
-      >
+      <div className="relative w-full h-1 bg-gray-400">
         <div className="bg-gray-500 h-1" style={{width: `${position}px`}} />
         <div
           className="h-1 bg-blue-500 absolute top-0 left-0"
@@ -112,12 +102,10 @@ const Controls = ({playerRef}: VideoProps) => {
 
   return (
     <div className="flex flex-col items-center absolute left-0 bottom-0 right-0 w-full z-20">
-      <div className="flex flex-none w-full">
-        <ControlsProgress playerRef={playerRef} />
-      </div>
+      <ControlsProgress playerRef={playerRef} />
       <div className="flex items-center justify-between w-full pb-3 px-4">
         <div className="flex items-center flex-none gap-4 text-white">
-          <button type="button">
+          <button type="button" onClick={() => send('PREV')}>
             <Icon id="skip_previous" />
           </button>
           {['ready.playing', 'ready.buffering'].some(state.matches) ? (
@@ -129,7 +117,7 @@ const Controls = ({playerRef}: VideoProps) => {
               <Icon id="play_arrow" />
             </button>
           )}
-          <button type="button">
+          <button type="button" onClick={() => send('NEXT')}>
             <Icon id="skip_next" />
           </button>
           <button type="button" onClick={() => send('MUTE')}>
@@ -165,12 +153,18 @@ export const Player = () => {
   )
   const [state] = useActor(playerRef!)
 
+  if (state.matches('error')) {
+    return (
+      <div className="border bg-black text-white w-full h-full flex items-center justify-center">
+        Broken URL!
+      </div>
+    )
+  }
+
   return (
     <div className="relative w-full">
-      <div className="aspect-w-16 w-full aspect-h-9 flex bg-black overflow-hidden">
-        <Video key={state.context.video?.url} playerRef={playerRef!} />
-      </div>
-      {!state.matches('error') && <Controls playerRef={playerRef!} />}
+      <Video key={state.context.video?.url} playerRef={playerRef!} />
+      <Controls playerRef={playerRef!} />
     </div>
   )
 }
